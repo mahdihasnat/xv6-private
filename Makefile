@@ -1,3 +1,5 @@
+MAKEFLAGS = -j8
+
 OBJS = \
 	bio.o\
 	console.o\
