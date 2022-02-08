@@ -497,7 +497,7 @@ kill(int pid)
 }
 
 void
-printMemoryInfo(struct proc *p){
+printPageTables(struct proc *p){
   cprintf("Page tables:\n");
   pde_t * pgdir = p->pgdir;
   cprintf("\tmemory location of page directory = ​%p\n", V2P(pgdir));
@@ -521,8 +521,7 @@ printMemoryInfo(struct proc *p){
     AssertPanic(PTE_ADDR(*pgdir) < PHYSTOP);
     cprintf("\t\tmemory location of page table = ​%p\n", PTE_ADDR(*pgdir));
 
-    for(int j=0;j<NPTENTRIES;j++,pte++)
-    {
+    for(int j=0;j<NPTENTRIES;j++,pte++){
         // discard page frame if not present
         if(!((*pte)&PTE_P)) continue;
 
@@ -535,7 +534,48 @@ printMemoryInfo(struct proc *p){
 
     }
   }
+}
 
+void
+printPageMappings(struct proc *p){
+  cprintf("Page mappings:\n");
+  pde_t * pgdir = p->pgdir;
+
+  AssertPanic((uint)V2P(pgdir) < PHYSTOP );
+
+  for(int i=0;i<(NPDENTRIES>>1);i++,pgdir++){
+    if(((*pgdir)&(1<<6)))
+      panic("procdump: dirty bit set in page directory");
+    // discard page table that is not present
+    if(!((*pgdir)&PTE_P)) continue;
+
+    // discard page table that is not user page table
+    if(!((*pgdir)&PTE_U)) continue;
+
+    // print physical address of page table
+    pte_t *pte = P2V((pte_t*)PTE_ADDR(*pgdir));
+    AssertPanic(PTE_ADDR(*pgdir) < PHYSTOP);
+
+    for(int j=0;j<NPTENTRIES;j++,pte++){
+        // discard page frame if not present
+        if(!((*pte)&PTE_P)) continue;
+
+        // discard page frame if not user's
+        if(!((*pte)&PTE_U)) continue;
+
+        
+        AssertPanic(PTE_ADDR(*pte));
+        // print virtual page frame  number-> physical page frame number
+        cprintf("\t%p -> %p\n",(i<<(PDXSHIFT-PTXSHIFT))|(j),PTE_ADDR(*pte)>>PGADDRBIT);
+
+    }
+  }
+}
+
+void
+printMemoryInfo(struct proc *p){
+  printPageTables(p);
+  printPageMappings(p);
   cprintf("\n");
 }
 

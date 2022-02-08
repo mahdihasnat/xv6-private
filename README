@@ -57,3 +57,4 @@ simulator and run "make qemu".
 - Added control+ 'O' to call procdump
 - Added AssertPanic in defs.h
 - Added Page Table printing in procdump
+- Added Page Mappings printing in procdump
