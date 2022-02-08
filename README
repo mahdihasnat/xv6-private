@@ -55,3 +55,4 @@ simulator and run "make qemu".
 - Added PGADDRBIT constant in mmu.h
 - Added rcr3() in x86.h
 - Added control+ 'O' to call procdump
+- Added AssertPanic in defs.h
