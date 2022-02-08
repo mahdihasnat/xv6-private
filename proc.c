@@ -496,6 +496,49 @@ kill(int pid)
   return -1;
 }
 
+void
+printMemoryInfo(struct proc *p){
+  cprintf("Page tables:\n");
+  pde_t * pgdir = p->pgdir;
+  cprintf("\tmemory location of page directory = ​%p\n", V2P(pgdir));
+
+  AssertPanic((uint)V2P(pgdir) < PHYSTOP );
+
+  for(int i=0;i<(NPDENTRIES>>1);i++,pgdir++){
+    if(((*pgdir)&(1<<6)))
+      panic("procdump: dirty bit set in page directory");
+    // discard page table that is not present
+    if(!((*pgdir)&PTE_P)) continue;
+
+    // discard page table that is not user page table
+    if(!((*pgdir)&PTE_U)) continue;
+
+    // print pyhsical address of page table
+    cprintf("\tpdir PTE %p, %p:\n", i, PTE_ADDR(*pgdir)>>PGADDRBIT);
+
+    // print physical address of page table
+    pte_t *pte = P2V((pte_t*)PTE_ADDR(*pgdir));
+    AssertPanic(PTE_ADDR(*pgdir) < PHYSTOP);
+    cprintf("\t\tmemory location of page table = ​%p\n", PTE_ADDR(*pgdir));
+
+    for(int j=0;j<NPTENTRIES;j++,pte++)
+    {
+        // discard page frame if not present
+        if(!((*pte)&PTE_P)) continue;
+
+        // discard page frame if not user's
+        if(!((*pte)&PTE_U)) continue;
+
+        // print page table entries
+        AssertPanic(PTE_ADDR(*pte));
+        cprintf("\t\tptbl PTE %p, %p, %p\n",j,PTE_ADDR(*pte)>>PGADDRBIT ,PTE_ADDR(*pte));
+
+    }
+  }
+
+  cprintf("\n");
+}
+
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.
@@ -530,5 +573,6 @@ procdump(void)
         cprintf(" %p", pc[i]);
     }
     cprintf("\n");
+    printMemoryInfo(p);
   }
 }
