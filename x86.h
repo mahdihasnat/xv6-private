@@ -144,6 +144,14 @@ lcr3(uint val)
   asm volatile("movl %0,%%cr3" : : "r" (val));
 }
 
+static inline uint
+rcr3(void)
+{
+  uint val;
+  asm volatile("movl %%cr3,%0" : "=r" (val));
+  return val;
+}
+
 //PAGEBREAK: 36
 // Layout of the trap frame built on the stack by the
 // hardware and by trapasm.S, and passed to trap().
