@@ -54,3 +54,4 @@ simulator and run "make qemu".
 - Added size check in mappages
 - Added PGADDRBIT constant in mmu.h
 - Added rcr3() in x86.h
+- Added control+ 'O' to call procdump
