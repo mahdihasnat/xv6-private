@@ -32,6 +32,100 @@ idtinit(void)
   lidt(idt, sizeof(idt));
 }
 
+const char *
+getTrapName(uint trapno){
+  const char * ret;
+  switch(trapno){
+    case T_DIVIDE:
+      ret = "T_DIVIDE";
+      break;
+    case T_DEBUG:
+      ret = "T_DEBUG";
+      break;
+    case T_NMI:
+      ret = "T_NMI";
+      break;
+    case T_BRKPT:
+      ret = "T_BRKPT";
+      break;
+    case T_OFLOW:
+      ret = "T_OFLOW";
+      break;
+    case T_BOUND:
+      ret = "T_BOUND";
+      break;
+    case T_ILLOP:
+      ret = "T_ILLOP";
+      break;
+    case T_DEVICE:
+      ret = "T_DEVICE";
+      break;
+    case T_DBLFLT:
+      ret = "T_DBLFLT";
+      break;
+    case T_TSS:
+      ret = "T_TSS";
+      break;
+    case T_SEGNP:
+      ret = "T_SEGNP";
+      break;
+    case T_STACK:
+      ret = "T_STACK";
+      break;
+    case T_GPFLT:
+      ret = "T_GPFLT";
+      break;
+    case T_PGFLT:
+      ret = "T_PGFLT";
+      break;
+    case T_FPERR:
+      ret = "T_FPERR";
+      break;
+    case T_ALIGN:
+      ret = "T_ALIGN";
+      break;
+    case T_MCHK:
+      ret = "T_MCHK";
+      break;
+    case T_SIMDERR:
+      ret = "T_SIMDERR";
+      break;
+    case T_SYSCALL:
+      ret = "T_SYSCALL";
+      break;
+    case T_DEFAULT:
+      ret = "T_DEFAULT";
+      break;
+    case T_IRQ0:
+      ret = "T_IRQ0";
+      break;
+    // case IRQ_TIMER:
+    //   ret = "IRQ_TIMER";
+    //   break;
+    // case IRQ_KBD:
+    //   ret = "IRQ_KBD";
+    //   break;
+    // case IRQ_COM1:
+    //   ret = "IRQ_COM1";
+    //   break;
+    // case IRQ_IDE:
+    //   ret = "IRQ_IDE";
+    //   break;
+    // case IRQ_ERROR:
+    //   ret = "IRQ_ERROR";
+    //   break;
+    case IRQ_SPURIOUS:
+      ret = "IRQ_SPURIOUS";
+      break;
+
+    default:
+      ret = "T_UNKNOWN";
+      break;
+
+  }
+  return ret;
+}
+
 //PAGEBREAK: 41
 void
 trap(struct trapframe *tf)
@@ -80,6 +174,7 @@ trap(struct trapframe *tf)
 
   //PAGEBREAK: 13
   default:
+    cprintf("\nTrap Name: %s\n", getTrapName(tf->trapno));
     if(myproc() == 0 || (tf->cs&3) == 0){
       // In kernel, it must be our mistake.
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
