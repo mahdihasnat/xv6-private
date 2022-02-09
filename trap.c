@@ -174,7 +174,7 @@ trap(struct trapframe *tf)
 
   //PAGEBREAK: 13
   default:
-    cprintf("\nTrap Name: %s\n", getTrapName(tf->trapno));
+    cprintf(WARNING_STR("\nTrap Name: %s\n"), getTrapName(tf->trapno));
     if(myproc() == 0 || (tf->cs&3) == 0){
       // In kernel, it must be our mistake.
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",

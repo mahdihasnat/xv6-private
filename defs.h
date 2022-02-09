@@ -196,6 +196,16 @@ void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
 
+// color code for terminal
+#define ANSI_COLOR_GREEN "\x1b[32m"
+#define ANSI_COLOR_RED "\x1b[31m"
+#define ANSI_COLOR_RESET "\x1b[0m"
+#define ANSI_COLOR_YELLOW "\x1b[33m"
+
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
-#define AssertPanic(x) if(!(x)) { cprintf("file:%s line:%d \n" , __FILE__ , __LINE__); panic(#x);}
+#define AssertPanic(x) if(!(x)) { cprintf( ERROR_STR("%s:%d\n") , __FILE__ , __LINE__); panic(#x);}
+
+#define ERROR_STR(x) ANSI_COLOR_RED x ANSI_COLOR_RESET
+#define WARNING_STR(x) ANSI_COLOR_YELLOW x ANSI_COLOR_RESET
+#define INFO_STR(x) ANSI_COLOR_GREEN x ANSI_COLOR_RESET
