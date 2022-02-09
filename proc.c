@@ -504,8 +504,8 @@ printPageTables(struct proc *p){
 
   AssertPanic((uint)V2P(pgdir) < PHYSTOP );
 
-  for(int i=0;i<(NPDENTRIES>>1);i++,pgdir++){
-    if(((*pgdir)&(1<<6)))
+  for(int i=0;i<(NPDENTRIES>>0);i++,pgdir++){
+    if(((*pgdir)&PTE_D))
       panic("procdump: dirty bit set in page directory");
     // discard page table that is not present
     if(!((*pgdir)&PTE_P)) continue;
@@ -543,7 +543,7 @@ printPageMappings(struct proc *p){
 
   AssertPanic((uint)V2P(pgdir) < PHYSTOP );
 
-  for(int i=0;i<(NPDENTRIES>>1);i++,pgdir++){
+  for(int i=0;i<(NPDENTRIES>>0);i++,pgdir++){
     if(((*pgdir)&(1<<6)))
       panic("procdump: dirty bit set in page directory");
     // discard page table that is not present

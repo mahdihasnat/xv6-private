@@ -136,6 +136,8 @@ setupkvm(void)
       freevm(pgdir);
       return 0;
     }
+  for(int i=512;i<1024;i++)
+    pgdir[i]&=~PTE_U;
   return pgdir;
 }
 
