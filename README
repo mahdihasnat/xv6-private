@@ -66,3 +66,4 @@ simulator and run "make qemu".
 - Added logging mechanism in defs.h
 - Added createSwapFile in proc:fork [ init process doesnot have swapfile ]
 - Added removeSwapFile in proc:exit
+- Added printing total free pages in proc:procdump

@@ -104,6 +104,10 @@ struct segdesc {
 #define PTE_ADDR(pte)   ((uint)(pte) & ~0xFFF)
 #define PTE_FLAGS(pte)  ((uint)(pte) &  0xFFF)
 
+// Page restrictions
+#define MAX_PSYC_PAGES  15
+#define MAX_TOTAL_PAGES 30
+
 #ifndef __ASSEMBLER__
 typedef uint pte_t;
 

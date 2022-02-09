@@ -56,9 +56,11 @@ freerange(void *vstart, void *vend)
 // which normally should have been returned by a
 // call to kalloc().  (The exception is when
 // initializing the allocator; see kinit above.)
+int total_free_pages = 0;
 void
 kfree(char *v)
 {
+  total_free_pages++;
   struct run *r;
 
   if((uint)v % PGSIZE || v < end || V2P(v) >= PHYSTOP)
@@ -82,6 +84,7 @@ kfree(char *v)
 char*
 kalloc(void)
 {
+  total_free_pages--;
   struct run *r;
 
   if(kmem.use_lock)
