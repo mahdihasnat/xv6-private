@@ -206,6 +206,14 @@ void            clearpteu(pde_t *pgdir, char *uva);
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 #define AssertPanic(x) if(!(x)) { cprintf( ERROR_STR("%s:%d\n") , __FILE__ , __LINE__); panic(#x);}
 
+#define DEBUG
+
+#ifdef DEBUG
+#define LOG(x) cprintf(INFO_STR("%s:%d %s\n") , __FILE__ , __LINE__, x)
+#else
+#define LOG(x)
+#endif
+
 #define ERROR_STR(x) ANSI_COLOR_RED x ANSI_COLOR_RESET
 #define WARNING_STR(x) ANSI_COLOR_YELLOW x ANSI_COLOR_RESET
 #define INFO_STR(x) ANSI_COLOR_GREEN x ANSI_COLOR_RESET

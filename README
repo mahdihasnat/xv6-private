@@ -63,3 +63,4 @@ simulator and run "make qemu".
 - Added q target as clean & qemu-nox in Makefile
 - Added modification of PTE_U flags in upper part of page directory in setupkvm
 - Added colorfull output in terminal
+- Added logging mechanism in defs.h
