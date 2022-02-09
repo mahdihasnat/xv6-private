@@ -59,3 +59,4 @@ simulator and run "make qemu".
 - Added Page Table printing in procdump
 - Added Page Mappings printing in procdump
 - Added Trap No description printing in trap.c
+- Added nulltest user program

@@ -177,6 +177,7 @@ UPROGS=\
 	_ln\
 	_ls\
 	_mkdir\
+	_nulltest\
 	_rm\
 	_sh\
 	_stressfs\
@@ -254,7 +255,7 @@ EXTRA=\
 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
 	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
-	.gdbinit.tmpl gdbutil\
+	.gdbinit.tmpl gdbutil nulltest.c\
 
 dist:
 	rm -rf dist
