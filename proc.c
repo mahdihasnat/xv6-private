@@ -212,6 +212,12 @@ fork(void)
 
   pid = np->pid;
 
+  // create swap file
+  // removed in exit
+  // LOG("fork create swap file\n");
+  createSwapFile(np);
+  // LOG("fork create swap file done\n");
+
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
@@ -246,6 +252,12 @@ exit(void)
   iput(curproc->cwd);
   end_op();
   curproc->cwd = 0;
+
+  // swap file created in fork , optionally in userinit
+  // removed in exit
+  // LOG("exit create swap file\n");
+  removeSwapFile(curproc);
+  // LOG("exit create swap file done\n");
 
   acquire(&ptable.lock);
 

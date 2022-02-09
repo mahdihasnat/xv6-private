@@ -64,3 +64,5 @@ simulator and run "make qemu".
 - Added modification of PTE_U flags in upper part of page directory in setupkvm
 - Added colorfull output in terminal
 - Added logging mechanism in defs.h
+- Added createSwapFile in proc:fork [ init process doesnot have swapfile ]
+- Added removeSwapFile in proc:exit
