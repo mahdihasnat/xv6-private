@@ -233,6 +233,12 @@ qemu-memfs: xv6memfs.img
 qemu-nox: fs.img xv6.img
 	$(QEMU) -nographic $(QEMUOPTS)
 
+q:
+	make clean
+	make qemu-nox
+
+.PHONY: qemu-nox clean
+
 .gdbinit: .gdbinit.tmpl
 	sed "s/localhost:1234/localhost:$(GDBPORT)/" < $^ > $@
 

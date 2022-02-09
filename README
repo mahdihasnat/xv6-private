@@ -60,3 +60,4 @@ simulator and run "make qemu".
 - Added Page Mappings printing in procdump
 - Added Trap No description printing in trap.c
 - Added nulltest user program
+- Added q target as clean & qemu-nox in Makefile
