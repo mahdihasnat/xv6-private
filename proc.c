@@ -203,6 +203,7 @@ fork(void)
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
 
+  // swap file init
   if(initSwap(np)<0)
   {
     kfree(np->kstack);
