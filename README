@@ -68,3 +68,4 @@ simulator and run "make qemu".
 - Added removeSwapFile in proc:exit
 - Added printing total free pages in proc:procdump
 - Added pagetest user program
+- Added refactored swapfile operation to swap.c

@@ -196,6 +196,11 @@ void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
 
+
+// swap.c
+int 			initSwap(struct proc *);
+int 			destroySwap(struct proc *);
+
 // color code for terminal
 #define ANSI_COLOR_GREEN "\x1b[32m"
 #define ANSI_COLOR_RED "\x1b[31m"

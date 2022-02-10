@@ -1,0 +1,20 @@
+#include "types.h"
+#include "defs.h"
+#include "param.h"
+#include "memlayout.h"
+#include "mmu.h"
+#include "x86.h"
+#include "proc.h"
+#include "spinlock.h"
+
+int
+initSwap(struct proc *p)
+{
+	return createSwapFile(p);
+}
+
+int
+destroySwap(struct proc *p)
+{
+	return removeSwapFile(p);
+}
