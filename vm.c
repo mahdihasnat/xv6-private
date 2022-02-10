@@ -280,7 +280,7 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       if(pa == 0)
         panic("kfree");
       char *v = P2V(pa);
-      if( oldsz != KERNBASE)
+      if(!( (uint)v & KERNBASE))
         AssertPanic(unlinkPage(myproc(),(uint)v) == 0);
       kfree(v);
       *pte = 0;

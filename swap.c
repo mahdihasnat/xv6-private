@@ -7,6 +7,7 @@
 #include "proc.h"
 #include "spinlock.h"
 
+#define LOGSWAP(x) x
 
 // swap is called either from fork or [userinit|exec]
 // this method is called from fork
@@ -14,7 +15,7 @@
 int
 initSwap(struct proc *p)
 {
-	cprintf("initSwap: p->pid %d\n", p->pid);
+	LOGSWAP(cprintf("initSwap: p->pid %d\n", p->pid);)
 	AssertPanic(p->parent!=0);	
 	// called from fork
 	memmove(p->VPN_Perm_Swap, p->parent->VPN_Perm_Swap, sizeof(p->VPN_Perm_Swap));
@@ -54,7 +55,7 @@ initSwap(struct proc *p)
 int
 initFreshSwap(struct proc *p)
 {
-	cprintf("initFreshSwap\n");
+	LOGSWAP(cprintf("initFreshSwap\n");)
 	memset(p->VPN_Perm_Swap, 0, sizeof(p->VPN_Perm_Swap));
 	memset(p->VPN_Perm_Memory, 0, sizeof(p->VPN_Perm_Memory));
 	p->swapSize = 0;
@@ -84,7 +85,7 @@ printSwapMetaData(struct proc *p)
 void
 moveToSwap(struct proc *p, uint idx)
 {
-	cprintf("moveToSwap: p->pid %d idx %d\n", p->pid, idx);
+	LOGSWAP(cprintf("moveToSwap: p->pid %d idx %d\n", p->pid, idx);)
 	AssertPanic(idx < MAX_PSYC_PAGES);
 	uint vpn_perm = p->VPN_Perm_Memory[idx];
 	pte_t *pte ;
@@ -159,10 +160,10 @@ moveFromSwap(struct proc *p, uint vpn, char * mem){
 int
 linkNewPage(struct proc *p, uint vpn_perm)
 {
-	cprintf(INFO_STR("linkNewPage: %d %p\n"), p->pid, vpn_perm);
+	LOGSWAP(cprintf(INFO_STR("linkNewPage: %d %p\n"), p->pid, vpn_perm);)
 	
 	#ifdef FIFO_SWAP
-		cprintf(WARNING_STR("sz:%d head:%d tail:%d\n"),p->q_size,p->q_head,p->q_tail);
+		LOGSWAP(cprintf(WARNING_STR("sz:%d head:%d tail:%d\n"),p->q_size,p->q_head,p->q_tail);)
 		if(p->q_size == MAX_PSYC_PAGES)
 		{
 			
@@ -203,7 +204,7 @@ linkNewPage(struct proc *p, uint vpn_perm)
 // Delete the page link from swap file or ememory
 int
 unlinkPage(struct proc *p, uint vpn_perm){
-	cprintf(INFO_STR("unlinkPage: %d %p\n"), p->pid, vpn_perm);
+	LOGSWAP(cprintf(INFO_STR("unlinkPage: %d %p\n"), p->pid, vpn_perm);)
 #ifdef FIFO_SWAP
 	int idx = p->q_head;
 	for (uint i = 0; i < p->q_size; i++, idx=CIRCLE_NEXT(idx, MAX_PSYC_PAGES)){
@@ -250,7 +251,7 @@ recoverPageFault(uint va){
 	
 	if(pte == 0)
 		return -1;
-	cprintf("recoverPageFault: %d  vpn %p  pte %p  *pte %p\n", p->pid, vpn,pte, *pte);
+	LOGSWAP(cprintf("recoverPageFault: %d  vpn %p  pte %p  *pte %p\n", p->pid, vpn,pte, *pte);)
 
 	if(!(*pte & PTE_PG))
 		return -1;
@@ -262,7 +263,6 @@ recoverPageFault(uint va){
 		kfree(mem);
 		return -1;
 	}
-	LOG("hehr");
 	
 	if(mappages(p->pgdir, (void*)vpn, PGSIZE, V2P(mem), perm) < 0){
 		kfree(mem);
