@@ -51,6 +51,15 @@ struct proc {
   char name[16];               // Process name (debugging)
   //Swap file. must initiate with create swap file
   struct file *swapFile;			//page file
+  uint swapSize;							//size of swap file
+  uint VPN_Swap[MAX_TOTAL_PAGES-MAX_PSYC_PAGES];
+  uint VPN_Memory[MAX_PSYC_PAGES];
+#ifdef FIFO_SWAP
+  uint q_head; /// front of queue
+  uint q_tail; // new position of tail
+  uint q_size; // size of queue
+#endif
+
 };
 
 // Process memory is laid out contiguously, low addresses first:

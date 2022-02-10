@@ -142,6 +142,8 @@ userinit(void)
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
+  initFirstProcessSwap(p);
+
   // this assignment to p->state lets other cores
   // run this process. the acquire forces the above
   // writes to be visible, and the lock is also needed
@@ -251,7 +253,7 @@ exit(void)
   end_op();
   curproc->cwd = 0;
 
-  destroySwap(curproc);
+  AssertPanic(destroySwap(curproc)==0);
 
   acquire(&ptable.lock);
 
@@ -581,10 +583,21 @@ printPageMappings(struct proc *p){
 extern int total_free_pages ;
 
 void
+printSwapInfo(struct proc *p){
+  cprintf("Swap info:\n");
+  cprintf("\t");
+  for(int i=0;i<NELEM(p->VPN_Swap);i++){
+    cprintf("%p ",p->VPN_Swap[i]);
+  }
+  cprintf("\n");
+}
+
+void
 printMemoryInfo(struct proc *p){
   printPageTables(p);
   printPageMappings(p);
   cprintf(INFO_STR("total_free_pages = 0x%p\n"),total_free_pages);
+  printSwapInfo(p);
   cprintf("\n");
 }
 

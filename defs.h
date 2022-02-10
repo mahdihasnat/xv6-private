@@ -200,6 +200,7 @@ void            clearpteu(pde_t *pgdir, char *uva);
 // swap.c
 int 			initSwap(struct proc *);
 int 			destroySwap(struct proc *);
+void 			initFirstProcessSwap(struct proc *);
 
 // color code for terminal
 #define ANSI_COLOR_GREEN "\x1b[32m"
@@ -212,6 +213,7 @@ int 			destroySwap(struct proc *);
 #define AssertPanic(x) if(!(x)) { cprintf( ERROR_STR("%s:%d\n") , __FILE__ , __LINE__); panic(#x);}
 
 #define DEBUG
+#define FIFO_SWAP
 
 #ifdef DEBUG
 #define LOG(x) cprintf(INFO_STR("%s:%d %s\n") , __FILE__ , __LINE__, x)
