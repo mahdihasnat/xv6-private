@@ -13,6 +13,7 @@
 int
 initSwap(struct proc *p)
 {
+	cprintf("initSwap: p->pid %d\n", p->pid);
 	AssertPanic(p->parent!=0);	
 	// called from fork
 	memmove(p->VPN_Swap, p->parent->VPN_Swap, sizeof(p->VPN_Swap));
@@ -25,12 +26,14 @@ initSwap(struct proc *p)
 	#endif
 	
 	if(createSwapFile(p)<0)
-		return 0;
+		return -1;
 	for(int i=0;i<p->swapSize;i++){
 		char *buff;
 		AssertPanic((buff = kalloc()) != 0);
-		readFromSwapFile(p->parent, buff, i << PGADDRBIT, PGSIZE);
-		writeToSwapFile(p, buff, i << PGADDRBIT, PGSIZE);
+		if(readFromSwapFile(p->parent, buff, i *PGSIZE, PGSIZE)<0)
+			return -1;
+		if(writeToSwapFile(p, buff, i *PGSIZE, PGSIZE)<0)
+			return -1;
 		kfree(buff);
 	}
 	return 0;
@@ -40,6 +43,7 @@ initSwap(struct proc *p)
 int
 initFreshSwap(struct proc *p)
 {
+	cprintf("initFreshSwap\n");
 	memset(p->VPN_Swap, 0, sizeof(p->VPN_Swap));
 	memset(p->VPN_Memory, 0, sizeof(p->VPN_Memory));
 	p->swapSize = 0;
@@ -75,7 +79,8 @@ moveToSwap(struct proc *p, uint idx)
 	AssertPanic((pte =(pte_t *) walkpgdir(p->pgdir, (void *)vpn, 0))!= 0);
 	*pte &= ~(PTE_P|PTE_PG);
 	char * mem = P2V(PTE_ADDR(*pte));
-	AssertPanic(writeToSwapFile(p,mem,(p->swapSize)<<PGADDRBIT , PGSIZE) == 0);
+	cprintf(INFO_STR("moveToSwap: %d %d %p %p  swsz:%d\n"), p->pid, idx, vpn, mem, p->swapSize);
+	AssertPanic(writeToSwapFile(p,mem,(p->swapSize)*PGSIZE , PGSIZE) == PGSIZE);
 	kfree(mem);
 }
 
@@ -89,6 +94,7 @@ moveToSwap(struct proc *p, uint idx)
 int
 linkNewPage(struct proc *p, uint vpn)
 {
+	cprintf(INFO_STR("linkNewPage: %d %p\n"), p->pid, vpn);
 	#ifdef FIFO_SWAP
 		cprintf(WARNING_STR("sz:%d head:%d tail:%d\n"),p->q_size,p->q_head,p->q_tail);
 		if(p->q_size == MAX_PSYC_PAGES)
@@ -124,3 +130,54 @@ linkNewPage(struct proc *p, uint vpn)
 		}
 	#endif
 }
+
+#define CIRCLE_NEXT(x,y) ((x)+1==(y)?0:(x)+1)
+
+// Return zero on success
+// Delete the page link from swap file or ememory
+int
+unlinkPage(struct proc *p, uint vpn){
+	cprintf(INFO_STR("unlinkPage: %d %p\n"), p->pid, vpn);
+#ifdef FIFO_SWAP
+	int idx = p->q_head;
+	for (uint i = 0; i < p->q_size; i++, idx=CIRCLE_NEXT(idx, MAX_PSYC_PAGES)){
+		if (p->VPN_Memory[idx] == vpn){
+			
+			while (i + 1 < p->q_size){
+				int nxt= CIRCLE_NEXT(idx, MAX_PSYC_PAGES);
+				p->VPN_Memory[idx] = p->VPN_Memory[nxt];
+				idx = nxt;
+				i++;
+			}
+			p->q_tail = idx;
+			p->q_size--;
+			if(p->q_size == 0)
+				AssertPanic(p->q_head == p->q_tail)
+			else if(p->q_head < p->q_tail)
+				AssertPanic(p->q_tail-p->q_head == p->q_size)
+			else
+				AssertPanic(MAX_PSYC_PAGES - p->q_head + p->q_tail == p->q_size)
+			return 0;
+		}
+	}
+#endif
+	for(int i=0;i<p->swapSize;i++){
+		if(p->VPN_Swap[i] == vpn){
+			if(i + 1 == p->swapSize ){
+				p->swapSize--;
+				return 0;
+			}
+			char * buff = kalloc();
+			AssertPanic(readFromSwapFile(p, buff, (p->swapSize -1) * PGSIZE, PGSIZE) == PGSIZE);
+			AssertPanic(writeToSwapFile(p, buff, i * PGSIZE, PGSIZE) == PGSIZE);
+			kfree(buff);
+			p->VPN_Swap[i] = p->VPN_Swap[p->swapSize-1];
+			p->swapSize--;
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+#undef CIRCLE_NEXT
