@@ -590,7 +590,7 @@ void
 printMemoryInfo(struct proc *p){
   printPageTables(p);
   printPageMappings(p);
-  cprintf(INFO_STR("total_free_pages = %d\n"),total_free_pages);
+  cprintf(INFO_STR("total_free_pages = 0x%p\n"),total_free_pages);
   cprintf("\n");
 }
 
