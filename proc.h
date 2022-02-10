@@ -55,8 +55,8 @@ struct proc {
   uint VPN_Swap[MAX_TOTAL_PAGES-MAX_PSYC_PAGES];
   uint VPN_Memory[MAX_PSYC_PAGES];
 #ifdef FIFO_SWAP
-  uint q_head; /// front of queue
-  uint q_tail; // new position of tail
+  uint q_head; /// front of queue , initially 0 , +=1 if pop 
+  uint q_tail; // new position of tail , initially 0 , +=1 if push
   uint q_size; // size of queue
 #endif
 

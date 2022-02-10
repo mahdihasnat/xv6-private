@@ -195,12 +195,14 @@ void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
-
+pte_t*			walkpgdir(pde_t*,const void *,int);
 
 // swap.c
 int 			initSwap(struct proc *);
+int 			initFreshSwap(struct proc *);
 int 			destroySwap(struct proc *);
 void 			initFirstProcessSwap(struct proc *);
+int				linkNewPage(struct proc *, uint);
 
 // color code for terminal
 #define ANSI_COLOR_GREEN "\x1b[32m"

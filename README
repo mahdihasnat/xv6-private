@@ -69,3 +69,4 @@ simulator and run "make qemu".
 - Added printing total free pages in proc:procdump
 - Added pagetest user program
 - Added refactored swapfile operation to swap.c
+- Added basic swapfile linking [for new pages allocated] in swap.c
