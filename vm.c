@@ -73,6 +73,8 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
     if((pte = walkpgdir(pgdir, a, 1)) == 0)
       return -1;
     if(*pte & PTE_P)
+      cprintf("mappages: pte %p *pte %p va %p\n", pte , *pte , va);  
+    if(*pte & PTE_P)
       panic("remap");
     *pte = pa | perm | PTE_P;
     if(a == last)
@@ -250,7 +252,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       kfree(mem);
       return 0;
     }
-    AssertPanic(linkNewPage(myproc(), a) == 0);
+    AssertPanic(linkNewPage(myproc(), a|PTE_W|PTE_A|PTE_W) == 0);
   }
   return newsz;
 }

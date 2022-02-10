@@ -196,6 +196,7 @@ void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
 pte_t*			walkpgdir(pde_t*,const void *,int);
+int				mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm);
 
 // swap.c
 int 			initSwap(struct proc *);
@@ -204,6 +205,7 @@ int 			destroySwap(struct proc *);
 void 			initFirstProcessSwap(struct proc *);
 int				linkNewPage(struct proc *, uint);
 int 			unlinkPage(struct proc *, uint);
+int				recoverPageFault(uint );
 
 // color code for terminal
 #define ANSI_COLOR_GREEN "\x1b[32m"
