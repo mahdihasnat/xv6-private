@@ -790,7 +790,7 @@ createSwapFile(struct proc* p)
     return 0;
 }
 
-//return as sys_write (-1 when error)
+//return as sys_write (-1 when error) or number of byte written
 int
 writeToSwapFile(struct proc * p, char* buffer, uint placeOnFile, uint size)
 {

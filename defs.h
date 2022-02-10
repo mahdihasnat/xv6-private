@@ -203,6 +203,7 @@ int 			initFreshSwap(struct proc *);
 int 			destroySwap(struct proc *);
 void 			initFirstProcessSwap(struct proc *);
 int				linkNewPage(struct proc *, uint);
+int 			unlinkPage(struct proc *, uint);
 
 // color code for terminal
 #define ANSI_COLOR_GREEN "\x1b[32m"
@@ -212,7 +213,7 @@ int				linkNewPage(struct proc *, uint);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
-#define AssertPanic(x) if(!(x)) { cprintf( ERROR_STR("%s:%d\n") , __FILE__ , __LINE__); panic(#x);}
+#define AssertPanic(x) {if(!(x)) { cprintf( ERROR_STR("%s:%d\n") , __FILE__ , __LINE__); panic(#x);}}
 
 #define DEBUG
 #define FIFO_SWAP

@@ -203,6 +203,15 @@ fork(void)
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
 
+  if(initSwap(np)<0)
+  {
+    kfree(np->kstack);
+    np->kstack = 0;
+    np->state = UNUSED;
+    return -1;
+  }
+  
+
   for(i = 0; i < NOFILE; i++)
     if(curproc->ofile[i])
       np->ofile[i] = filedup(curproc->ofile[i]);
@@ -212,9 +221,6 @@ fork(void)
 
   pid = np->pid;
 
-  
-  initSwap(np);
-  
 
   acquire(&ptable.lock);
 
