@@ -590,8 +590,8 @@ void
 printSwapInfo(struct proc *p){
   cprintf("Swap info:\n");
   cprintf("\t");
-  for(int i=0;i<NELEM(p->VPN_Swap);i++){
-    cprintf("%p ",p->VPN_Swap[i]);
+  for(int i=0;i<NELEM(p->VPN_Perm_Swap);i++){
+    cprintf("%p ",p->VPN_Perm_Swap[i]);
   }
   cprintf("\n");
 }

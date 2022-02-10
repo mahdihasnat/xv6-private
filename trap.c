@@ -172,6 +172,16 @@ trap(struct trapframe *tf)
     lapiceoi();
     break;
 
+  case T_PGFLT:
+    cprintf(INFO_STR("Page fault at %x:%x\n"), tf->cs, tf->eip);
+    uint va = rcr2();
+    cprintf(INFO_STR("va = %x\n"), va);
+    if(recoverPageFault(va)==0)
+    {
+      LOG("pagefault success");
+      break;
+    }
+
   //PAGEBREAK: 13
   default:
     cprintf(WARNING_STR("\nTrap Name: %s\n"), getTrapName(tf->trapno));
