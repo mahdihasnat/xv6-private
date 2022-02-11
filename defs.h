@@ -223,7 +223,8 @@ int				restoreSwap(struct proc *);
 #define AssertPanic(x) {if(!(x)) { cprintf( ERROR_STR("%s:%d\n") , __FILE__ , __LINE__); panic(#x);}}
 
 #define DEBUG
-#define FIFO_SWAP
+// #define FIFO_SWAP
+#define NFU_SWAP
 
 #ifdef DEBUG
 #define LOG(x) cprintf(INFO_STR("%s:%d %s\n") , __FILE__ , __LINE__, x)

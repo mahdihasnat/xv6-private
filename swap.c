@@ -29,6 +29,9 @@ initSwap(struct proc *p)
 		p->q_tail = p->parent->q_tail;	
 		p->size_mem = p->parent->size_mem;	
 	#endif
+	#ifdef NFU_SWAP
+		// noting to do
+	#endif
 	
 	if(createSwapFile(p)<0){
 		cprintf(ERROR_STR("initSwap: createSwapFile failed\n"));
@@ -68,6 +71,9 @@ initFreshSwap(struct proc *p)
 	p->q_head = 0;
 	p->q_tail = 0;
 	p->size_mem = 0;
+#endif
+#ifdef NFU_SWAP
+	// noting to do
 #endif
 	return createSwapFile(p);
 }
@@ -118,7 +124,7 @@ restoreSwap(struct proc *p)
 }
 
 
-// return available index pages in swap file
+// return available index pages in swap file , -1 in case of none
 static int
 getFreeSwapPageIndex(struct proc *p)
 {
@@ -137,7 +143,7 @@ moveToSwap(struct proc *p, uint idx_mem,uint idx_swap)
 	AssertPanic(idx_mem < MAX_PSYC_PAGES);
 	AssertPanic(idx_swap < MAX_SWAP_PAGES);
 
-	uint vpa = p->VPA_Memory[idx_mem]; // virtual page address
+	uint vpa = MEM_ADDR(p->VPA_Memory[idx_mem]); // virtual page address
 	AssertPanic(PTE_FLAGS(vpa)==0); // last 12 bits are zero
 
 	pte_t *pte ;
@@ -212,6 +218,7 @@ swapFillGap(struct proc *p,uint idx){
 */
 
 // move page from swap to mem , return 0 on success or -1 on error
+// clear swap page
 int
 moveFromSwap(struct proc *p, uint vpa, char * mem){
 	AssertPanic(PTE_FLAGS(vpa) == 0);
@@ -251,45 +258,88 @@ int
 linkNewPage(struct proc *p, uint vpa)
 {
 	LOGSWAP(cprintf(INFO_STR("linkNewPage: pid %d vpa %p\n"), p->pid, vpa);)
+
 	AssertPanic(PTE_FLAGS(vpa) ==0);
-	#ifdef FIFO_SWAP
-		LOGSWAP(cprintf(WARNING_STR("sz:%d head:%d tail:%d\n"),p->size_mem,p->q_head,p->q_tail);)
-		if(p->size_mem == MAX_PSYC_PAGES)
+
+#ifdef FIFO_SWAP
+	LOGSWAP(cprintf(WARNING_STR("sz:%d head:%d tail:%d\n"),p->size_mem,p->q_head,p->q_tail);)
+	if(p->size_mem == MAX_PSYC_PAGES)
+	{
+		LOGSWAP(cprintf(WARNING_STR("swap: queue full\n"));)
+		// queue is full , phy_mem full
+		AssertPanic(p->q_head == p->q_tail);
+
+		int idx_swap = getFreeSwapPageIndex(p);
+
+
+		if(idx_swap == -1)
 		{
-			LOGSWAP(cprintf(WARNING_STR("swap: queue full\n"));)
-			// queue is full , phy_mem full
-			AssertPanic(p->q_head == p->q_tail);
-
-			int idx_swap = getFreeSwapPageIndex(p);
-
-
-			if(idx_swap == -1)
-			{
-				cprintf(ERROR_STR("linkNewPage: getFreeSwapPageIndex failed | max number of pages reached\n"));
-				return -1;
-			}
-			else
-			{
-				LOGSWAP(cprintf(INFO_STR("linkNewPage: moving mem %d -> %d swap\n"),p->q_head, idx_swap);)
-				// swap file not full
-				// move page to swap file
-				moveToSwap(p,p->q_head, idx_swap);
-				p->VPA_Memory[p->q_tail]= vpa;
-				p->q_tail = (p->q_tail + 1) % MAX_PSYC_PAGES;
-				p->q_head = (p->q_head + 1) % MAX_PSYC_PAGES;
-				return 0;
-			}
+			cprintf(ERROR_STR("linkNewPage: getFreeSwapPageIndex failed | max number of pages reached\n"));
+			return -1;
 		}
-		else 
+		else
 		{
-			
-			// add to tail
-			p->VPA_Memory[p->q_tail] = vpa;
+			LOGSWAP(cprintf(INFO_STR("linkNewPage: moving mem %d -> %d swap\n"),p->q_head, idx_swap);)
+			// swap file not full
+			// move page to swap file
+			moveToSwap(p,p->q_head, idx_swap);
+			p->VPA_Memory[p->q_tail]= vpa|MEM_P;
 			p->q_tail = (p->q_tail + 1) % MAX_PSYC_PAGES;
-			p->size_mem++;
+			p->q_head = (p->q_head + 1) % MAX_PSYC_PAGES;
 			return 0;
 		}
-	#endif
+	}
+	else 
+	{
+		// add to tail
+		p->VPA_Memory[p->q_tail] = vpa|MEM_P;
+		p->q_tail = (p->q_tail + 1) % MAX_PSYC_PAGES;
+		p->size_mem++;
+		return 0;
+	}
+#endif
+#ifdef NFU_SWAP
+	if(p->size_mem == MAX_PSYC_PAGES)
+	{
+		LOGSWAP(cprintf(WARNING_STR("swap: queue full\n"));)
+		// queue is full , phy_mem full
+
+		int idx_swap = getFreeSwapPageIndex(p);
+		if(idx_swap == -1)
+		{
+			cprintf(ERROR_STR("linkNewPage: getFreeSwapPageIndex failed | max number of pages reached\n"));
+			return -1;
+		}
+		// select a page to evict
+		// select with lowest counter
+		int idx_mem = -1;
+		uint mx_count = 0xffffffff;
+		for(int i=0;i< MAX_PSYC_PAGES ; i++)
+		{
+			if(NFU_MEM_COUNTER(p->VPA_Memory[i]) <= mx_count)
+			{
+				mx_count = NFU_MEM_COUNTER(p->VPA_Memory[i]);
+				idx_mem = i;
+			}
+		}
+		AssertPanic(idx_mem != -1);
+		LOGSWAP(cprintf(INFO_STR("linkNewPage: moving mem %d -> %d swap\n"),idx_mem, idx_swap);)
+		if(moveToSwap(p,idx_mem, idx_swap) != 0)
+		{
+			cprintf(ERROR_STR("linkNewPage: moveToSwap failed\n"));
+			return -1;
+		}
+		p->VPA_Memory[idx_mem] = vpa | MEM_P ;
+		return 0;
+	}
+	else 
+	{
+		// add to last element
+		p->VPA_Memory[p->size_mem++] = vpa | MEM_P;
+		return 0;
+	}
+#endif
+
 }
 
 
@@ -306,7 +356,7 @@ unlinkPage(struct proc *p, uint vpa){
 
 	int idx = p->q_head;
 	for (uint i = 0; i < p->size_mem; i++, idx=CIRCLE_NEXT(idx, MAX_PSYC_PAGES)){
-		if ((p->VPA_Memory[idx] )== (vpa)){
+		if (MEM_ADDR(p->VPA_Memory[idx] )== (vpa)){
 			
 			while (i + 1 < p->size_mem){
 				int nxt= CIRCLE_NEXT(idx, MAX_PSYC_PAGES);
@@ -329,6 +379,23 @@ unlinkPage(struct proc *p, uint vpa){
 		}
 	}
 #endif
+#ifdef NFU_SWAP
+	AssertPanic(p->size_mem <= MAX_PSYC_PAGES); // sanity check
+	for(int i=0;i<p->size_mem;i++)
+	{
+		if(MEM_ADDR(p->VPA_Memory[i]) == vpa)
+		{
+			// found
+			// move to swap file
+			AssertPanic(p->size_mem > 0);
+			p->size_mem--;
+			p->VPA_Memory[i] = p->VPA_Memory[p->size_mem];
+			p->VPA_Memory[p->size_mem] = 0;
+			return 0;
+		}
+	}
+#endif
+
 	for(int i=0;i<NELEM(p->VPA_Swap);i++){
 		if(!(p->VPA_Swap[i]&SWAP_P))
 			continue;
@@ -384,6 +451,7 @@ recoverPageFault(uint va){
 		kfree(mem);
 		return -1;
 	}
+	
 	// switchuvm(p);
 	return 0;
 }

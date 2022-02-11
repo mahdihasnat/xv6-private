@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "swap.h"
 
 struct {
   struct spinlock lock;
@@ -593,6 +594,12 @@ printSwapInfo(struct proc *p){
 #ifdef FIFO_SWAP
   cprintf("\tFIFO swap head %d tail %d size %d\n",p->q_head,p->q_tail,p->size_mem);
 #endif
+#ifdef NFU_SWAP
+  cprintf("\tNFU swap counters [prsnt:cnt]: ");
+  for(int i=0;i<NELEM(p->VPA_Memory);i++)
+    cprintf("[%d:%d] ",(p->VPA_Memory[i]&MEM_P ? 1 : 0) , NFU_MEM_COUNTER(p->VPA_Memory[i]));
+  cprintf("\n");
+#endif
   cprintf("VPA_Swap : ");
   for(int i=0;i<NELEM(p->VPA_Swap);i++){
     cprintf("%p ",p->VPA_Swap[i]);
@@ -601,7 +608,7 @@ printSwapInfo(struct proc *p){
 
   cprintf("VPA_Memory : ");
   for(int i=0;i<NELEM(p->VPA_Memory);i++){
-    cprintf("%p ",p->VPA_Memory[i]);
+    cprintf("%p ",MEM_ADDR(p->VPA_Memory[i]));
   }
   cprintf("\n");
 }
