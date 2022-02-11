@@ -38,6 +38,9 @@ exec(char *path, char **argv)
   if((pgdir = setupkvm()) == 0)
     goto bad;
 
+  restoreSwap(curproc);
+  destroySwap(curproc);
+  initFreshSwap(curproc);
   // create swapfor this new program as well
   // AssertPanic(initFreshSwap(curproc)==0);
 
@@ -103,6 +106,7 @@ exec(char *path, char **argv)
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
   switchuvm(curproc);
+  cprintf(INFO_STR("exec: %s\n"), curproc->name);
   freevm(oldpgdir);
   return 0;
 

@@ -9,6 +9,19 @@
 
 #define LOGSWAP(x) x
 
+
+int
+swapIn(struct proc *p ,char * buff,uint vpa)
+{
+	LOGSWAP(cprintf("swapIn: pid %d  vpa %d\n",p->pid,vpa));
+	if(readFromSwapFile(p,buff,vpa,PGSIZE)!=PGSIZE)
+	{
+		LOGSWAP(cprintf(ERROR_STR("swapIn: readFromSwapFile failed\n")));
+		return -1;
+	}
+	return 0;
+}
+
 // swap is called either from fork or [userinit|exec]
 // this method is called from fork
 // upon failure no swap file is created
@@ -113,6 +126,40 @@ initFreshSwap(struct proc *p)
 	// 	AssertPanic(ret == PGSIZE);
 	// }
 	// kfree(buf);
+	return 0;
+}
+
+// restore swap pages to memory, called from exec
+int
+restoreSwap(struct proc *p)
+{
+	LOGSWAP(cprintf(DEBUG_STR("restoreSwap pid %p\n"),p->pid);)
+	for(int i=0;i<p->sz;i++)
+	{
+		pte_t * pte = walkpgdir(p->pgdir, (void*)i, 0);
+		if(pte == 0)
+		{
+			cprintf(ERROR_STR("restoreSwap: walkpgdir failed\n"));
+			return -1;
+		}
+		if((*pte)&PTE_PG)
+		{
+			char * buff = kalloc();
+			if(buff == 0)
+			{
+				cprintf(ERROR_STR("restoreSwap: kalloc failed\n"));
+				return -1;
+			}
+			if(swapIn(p, buff, i)<0)
+			{
+				cprintf(ERROR_STR("restoreSwap: swapIn failed\n"));
+				kfree(buff);
+				return -1;
+			}
+			*pte = (V2P(buff) | PTE_FLAGS(*pte) | PTE_P) ^ PTE_PG;
+		}
+		else AssertPanic(*pte & PTE_P);
+	}
 	return 0;
 }
 

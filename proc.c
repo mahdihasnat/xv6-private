@@ -189,6 +189,9 @@ fork(void)
     return -1;
   }
 
+  np->sz = curproc->sz;
+  np->parent = curproc;
+  *np->tf = *curproc->tf;
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz,np)) == 0){
     kfree(np->kstack);
@@ -196,9 +199,6 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
-  np->sz = curproc->sz;
-  np->parent = curproc;
-  *np->tf = *curproc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -590,6 +590,7 @@ extern int total_free_pages ;
 void
 printSwapInfo(struct proc *p){
   cprintf("Swap info:\n");
+  cprintf("\ttotalPages: %d\n",p->totaPages);
   cprintf("\t");
   for(int i=0;i<NELEM(p->VPA_Memory);i++){
     cprintf("%p ",p->VPA_Memory[i]);

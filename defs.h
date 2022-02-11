@@ -206,6 +206,7 @@ int				linkNewPage(struct proc *, uint);
 int 			unlinkPage(struct proc *, uint);
 int				recoverPageFault(uint );
 int				copySwapPage(struct proc*, struct proc*, uint );
+int 			restoreSwap(struct proc *);
 
 // color code for terminal
 #define ANSI_COLOR_GREEN "\x1b[32m"

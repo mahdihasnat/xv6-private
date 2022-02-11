@@ -252,6 +252,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       kfree(mem);
       return 0;
     }
+    linkNewPage(myproc(),a);
   }
   return newsz;
 }
@@ -279,6 +280,10 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       if(pa == 0)
         panic("kfree");
       char *v = P2V(pa);
+      if(!(a & KERNBASE) && oldsz != KERNBASE)
+      {
+        unlinkPage(myproc(),a);
+      }
 
       kfree(v);
       *pte = 0;
@@ -333,23 +338,21 @@ copyuvm(pde_t *pgdir, uint sz, struct proc *p)
   if((d = setupkvm()) == 0)
     return 0;
   
-  // initFreshSwap(p);
+  initSwap(p);
 
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
-    // if((*pte & PTE_PG))
-    // {
-    //   copySwapPage(p->parent , p , i);
-    //   p->totaPages++;
-    //   pa = PTE_ADDR(*pte);
-    //   flags = PTE_FLAGS(*pte);
-    //   pte_t * newPte = walkpgdir(d, (void *) i, 1);
-    //   AssertPanic(newPte != 0);
-    //   *newPte = PTE_FLAGS( *pte);
-    //   continue;
-    // }
-    if(!(*pte & PTE_P))
+    if((*pte & PTE_PG))
+    {
+      copySwapPage(p->parent , p , i);
+      flags = PTE_FLAGS(*pte);
+      pte_t * newPte = walkpgdir(d, (void *) i, 1);
+      AssertPanic(newPte != 0);
+      *newPte = PTE_FLAGS( *pte);
+      continue;
+    }
+    else if(!(*pte & PTE_P))
       panic("copyuvm: page not present");
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
