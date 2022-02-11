@@ -102,6 +102,55 @@ fork_test2()
 
 }
 
+// 15 page in mem
+// so allocate 20 page
+// read first 10 page
+int nfu_test(int new_page)
+{
+	char * curr_size=sbrk(0);
+	
+	volatile char c = 'a';
+	
+	for(int i=0;i<new_page;i++)
+	{
+		sbrk(PGSIZE);
+		if(i==0)
+		{
+			for(int j=0;j<PGSIZE;j++)
+			{
+				(curr_size+0 * PGSIZE)[j]=c+j%26;
+			}
+		}
+	}
+	printf(1,"write to first page complete and allocated %d page\n",new_page);
+	printf(1,"now goint to sleep\n");
+	sleep(50);
+	printf(1,"now wake up and reading back first page\n");
+	for(int j=0;j<PGSIZE;j++)
+	{
+		if((curr_size+0 * PGSIZE)[j] != c+j%26){
+			printf(1,"(curr_size+0 * PGSIZE)[j] %c !=c+j%26 %c\n",(curr_size+0 * PGSIZE)[j],c+j%26);
+			return -1;
+		}
+	}
+	printf(1,"read back first page complete and validated\n");
+	for(int i=0;i<new_page;i++)
+	{
+		sbrk(-PGSIZE);
+	}
+	if(sbrk(0)!=curr_size)
+	{
+		return -1;
+	}
+	for(int i=0;i<new_page;i++)
+	{
+		sbrk(PGSIZE);
+	}
+	
+	
+	return 0;
+}
+
 
 int
 main(int argc, char * argv[]){
@@ -109,8 +158,13 @@ main(int argc, char * argv[]){
 		printf(1,"fifo test passed\n");
 	else
 		printf(1,"fifo test failed\n");
-	fork_test();
-	fork_test2();
+	// fork_test();
+	
+	if(nfu_test(10)==0)
+		printf(1,"nfu test passed\n");
+	else
+		printf(1,"nfu test failed\n");
+	// fork_test2();
 	// uint curr_size=(uint)sbrk(0);
 	// printf(1,"current size = %p\n",curr_size);
 	// // ddd4

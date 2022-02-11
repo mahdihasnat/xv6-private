@@ -9,8 +9,8 @@
 
 #include "swap.h"
 
-#define LOGSWAP(x) x
-// #define LOGSWAP(x)
+// #define LOGSWAP(x) x
+#define LOGSWAP(x)
 
 
 // swap is called either from fork or [userinit|exec]
@@ -384,7 +384,7 @@ unlinkPage(struct proc *p, uint vpa){
 				AssertPanic(p->q_head == p->q_tail)
 			else if(p->q_head < p->q_tail)
 			{
-				cprintf("h %d t %d s %d\n",p->q_head,p->q_tail,p->size_mem);
+				LOGSWAP(cprintf("h %d t %d s %d\n",p->q_head,p->q_tail,p->size_mem);)
 				AssertPanic(p->q_tail-p->q_head == p->size_mem)
 			}
 			else

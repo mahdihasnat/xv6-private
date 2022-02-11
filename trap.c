@@ -178,6 +178,7 @@ trap(struct trapframe *tf)
     break;
 
   case T_PGFLT:
+    cprintf("page fault\n");
     cprintf(INFO_STR("Page fault at %x:%x\n"), tf->cs, tf->eip);
     uint va = rcr2();
     cprintf(INFO_STR("va = %x\n"), va);
