@@ -39,7 +39,7 @@ exec(char *path, char **argv)
     goto bad;
 
   // create swapfor this new program as well
-  AssertPanic(initFreshSwap(curproc)==0);
+  // AssertPanic(initFreshSwap(curproc)==0);
 
   // Load program into memory.
   sz = 0;

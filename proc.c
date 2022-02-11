@@ -190,7 +190,7 @@ fork(void)
   }
 
   // Copy process state from proc.
-  if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
+  if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz,np)) == 0){
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
@@ -204,13 +204,13 @@ fork(void)
   np->tf->eax = 0;
 
   // swap file init
-  if(initSwap(np)<0)
-  {
-    kfree(np->kstack);
-    np->kstack = 0;
-    np->state = UNUSED;
-    return -1;
-  }
+  // if(initSwap(np)<0)
+  // {
+  //   kfree(np->kstack);
+  //   np->kstack = 0;
+  //   np->state = UNUSED;
+  //   return -1;
+  // }
   
 
   for(i = 0; i < NOFILE; i++)
@@ -258,7 +258,7 @@ exit(void)
   end_op();
   curproc->cwd = 0;
 
-  AssertPanic(destroySwap(curproc)==0);
+  // AssertPanic(destroySwap(curproc)==0);
 
   acquire(&ptable.lock);
 
@@ -591,8 +591,8 @@ void
 printSwapInfo(struct proc *p){
   cprintf("Swap info:\n");
   cprintf("\t");
-  for(int i=0;i<NELEM(p->VPN_Perm_Swap);i++){
-    cprintf("%p ",p->VPN_Perm_Swap[i]);
+  for(int i=0;i<NELEM(p->VPA_Memory);i++){
+    cprintf("%p ",p->VPA_Memory[i]);
   }
   cprintf("\n");
 }

@@ -252,7 +252,6 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       kfree(mem);
       return 0;
     }
-    AssertPanic(linkNewPage(myproc(), a|PTE_W|PTE_A|PTE_W) == 0);
   }
   return newsz;
 }
@@ -280,8 +279,7 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       if(pa == 0)
         panic("kfree");
       char *v = P2V(pa);
-      if(!( (uint)v & KERNBASE))
-        AssertPanic(unlinkPage(myproc(),(uint)v) == 0);
+
       kfree(v);
       *pte = 0;
     }
@@ -294,6 +292,7 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
 void
 freevm(pde_t *pgdir)
 {
+  cprintf(DEBUG_STR("freevm pgdir:%p\n"), pgdir);
   uint i;
 
   if(pgdir == 0)
@@ -324,7 +323,7 @@ clearpteu(pde_t *pgdir, char *uva)
 // Given a parent process's page table, create a copy
 // of it for a child.
 pde_t*
-copyuvm(pde_t *pgdir, uint sz)
+copyuvm(pde_t *pgdir, uint sz, struct proc *p)
 {
   pde_t *d;
   pte_t *pte;
@@ -333,12 +332,24 @@ copyuvm(pde_t *pgdir, uint sz)
 
   if((d = setupkvm()) == 0)
     return 0;
+  
+  // initFreshSwap(p);
+
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
     if((*pte & PTE_PG))
+    {
+      copySwapPage(p->parent , p , i);
+      p->totaPages++;
+      pa = PTE_ADDR(*pte);
+      flags = PTE_FLAGS(*pte);
+      pte_t * newPte = walkpgdir(d, (void *) i, 1);
+      AssertPanic(newPte != 0);
+      *newPte = PTE_FLAGS( *pte);
       continue;
-    if(!(*pte & PTE_P))
+    }
+    else if(!(*pte & PTE_P))
       panic("copyuvm: page not present");
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
@@ -349,6 +360,7 @@ copyuvm(pde_t *pgdir, uint sz)
       kfree(mem);
       goto bad;
     }
+    // linkNewPage(p,i);
   }
   return d;
 

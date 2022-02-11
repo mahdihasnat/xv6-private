@@ -51,9 +51,8 @@ struct proc {
   char name[16];               // Process name (debugging)
   //Swap file. must initiate with create swap file
   struct file *swapFile;			//page file
-  uint swapSize;							//size of swap file
-  uint VPN_Perm_Swap[MAX_TOTAL_PAGES-MAX_PSYC_PAGES];
-  uint VPN_Perm_Memory[MAX_PSYC_PAGES];
+  uint VPA_Memory[MAX_PSYC_PAGES];  // Virtual page address 
+  uint totaPages;               // Total allocated [valid | PTE_U] pages in virtual memory
 #ifdef FIFO_SWAP
   int q_head; /// front of queue , initially 0 , +=1 if pop 
   int q_tail; // new position of tail , initially 0 , +=1 if push
