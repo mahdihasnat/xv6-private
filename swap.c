@@ -182,9 +182,10 @@ forceWriteBack(struct proc *p, uint vpa, char *mem)
 {
 	AssertPanic(PTE_FLAGS(vpa) == 0);
 	LOGSWAP(cprintf(DEBUG_STR("forceWriteBack: pid %p, vpa %p\n"),p->pid, vpa);)
-	if(writeToSwapFile(p, mem,vpa , PGSIZE) != PGSIZE)
+	int written = 0;
+	if((written = writeToSwapFile(p, mem,vpa , PGSIZE)) != PGSIZE)
 	{
-		cprintf(ERROR_STR("forceWriteBack: writeToSwapFile failed\n"));
+		cprintf(ERROR_STR("forceWriteBack: writeToSwapFile failed written %d\n"),written);
 		return -1;
 	}
 	return 0;
@@ -199,7 +200,7 @@ swapOut(struct proc *p, uint vpa)
 	AssertPanic(pte != 0);
 	AssertPanic((*pte & PTE_P));
 	LOGSWAP(cprintf("swapOut: pte %p *pte \n", pte, *pte);)
-	if((*pte) & PTE_D)
+	// if((*pte) & PTE_D) // fork e copy korini
 	{
 		if(writeToSwapFile(p, (char *) P2V( PTE_ADDR(*pte) ), vpa, PGSIZE) != PGSIZE)
 		{

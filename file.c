@@ -130,6 +130,7 @@ filewrite(struct file *f, char *addr, int n)
     // and 2 blocks of slop for non-aligned writes.
     // this really belongs lower down, since writei()
     // might be writing a device like the console.
+    // cprintf(INFO_STR("filewrite: n %d\n"), n);
     int max = ((MAXOPBLOCKS-1-1-2) / 2) * 512;
     int i = 0;
     while(i < n){
@@ -144,8 +145,10 @@ filewrite(struct file *f, char *addr, int n)
       iunlock(f->ip);
       end_op();
 
-      if(r < 0)
+      if(r < 0){
+        cprintf(ERROR_STR("filewrite: writei error r %d\n"), r);
         break;
+      }
       if(r != n1)
         panic("short filewrite");
       i += r;

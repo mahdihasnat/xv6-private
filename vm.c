@@ -367,18 +367,22 @@ copyuvm(pde_t *pgdir, uint sz, struct proc *p)
     // linkNewPage(p,i);
     // non dirty hoile pore swapout korar somoy writeback na o korte pare,  
     // so non dirty er jonno swap file eo write kora uchit
-
+    /*
     if(!( (*pte)&PTE_D))
     {
       //copySwapPage(p->parent , p , i); // eta kaj korbe na karon swap file e age write na o korte pare
       // othoba ram thekeo copy kora jay
-      if(forceWriteBack(p,i,P2V(PTE_ADDR(pte)))<0)
+      if(forceWriteBack(p,i,P2V(PTE_ADDR(*pte)))<0)
       {
         cprintf("copyuvm: forceWriteBack failed\n");
         goto bad;
       }
 
-    }
+
+    }*/
+    // kaj kore nai karon file system load nite pare nai
+    // so swap out er somoy sob page write kora lagbe
+
 
   }
   return d;

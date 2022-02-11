@@ -591,6 +591,10 @@ void
 printSwapInfo(struct proc *p){
   cprintf("Swap info:\n");
   cprintf("\ttotalPages: %d\n",p->totaPages);
+#ifdef FIFO_SWAP
+  cprintf("\tememoryPages: %d  [%d,%d)\n",p->q_size,p->q_head,p->q_tail);
+#endif
+
   cprintf("\t");
   for(int i=0;i<NELEM(p->VPA_Memory);i++){
     cprintf("%p ",p->VPA_Memory[i]);
