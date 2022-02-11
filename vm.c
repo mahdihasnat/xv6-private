@@ -252,7 +252,7 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       kfree(mem);
       return 0;
     }
-    AssertPanic(linkNewPage(myproc(), a|PTE_W|PTE_A|PTE_W) == 0);
+    AssertPanic(linkNewPage(myproc(), a) == 0);
   }
   return newsz;
 }
@@ -280,8 +280,8 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       if(pa == 0)
         panic("kfree");
       char *v = P2V(pa);
-      if(!( (uint)v & KERNBASE))
-        AssertPanic(unlinkPage(myproc(),(uint)v) == 0);
+      if( oldsz != KERNBASE)
+        AssertPanic(unlinkPage(myproc(),(uint)a) == 0);
       kfree(v);
       *pte = 0;
     }
@@ -337,7 +337,14 @@ copyuvm(pde_t *pgdir, uint sz)
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
     if((*pte & PTE_PG))
+    {
+       // page is swapped out in parent pagae table
+      flags = PTE_FLAGS(*pte);
+      pte_t * newPte = walkpgdir(d, (void *) i, 1);
+      AssertPanic(newPte != 0);
+      *newPte = PTE_FLAGS( *pte);
       continue;
+    }
     if(!(*pte & PTE_P))
       panic("copyuvm: page not present");
     pa = PTE_ADDR(*pte);
@@ -345,7 +352,7 @@ copyuvm(pde_t *pgdir, uint sz)
     if((mem = kalloc()) == 0)
       goto bad;
     memmove(mem, (char*)P2V(pa), PGSIZE);
-    if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0) {
+    if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0) { // flags are forwared 
       kfree(mem);
       goto bad;
     }
