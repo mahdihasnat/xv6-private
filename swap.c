@@ -27,7 +27,7 @@ initSwap(struct proc *p)
 	#ifdef FIFO_SWAP
 		p->q_head = p->parent->q_head;
 		p->q_tail = p->parent->q_tail;	
-		p->q_size = p->parent->q_size;	
+		p->size_mem = p->parent->size_mem;	
 	#endif
 	
 	if(createSwapFile(p)<0){
@@ -67,7 +67,7 @@ initFreshSwap(struct proc *p)
 #ifdef FIFO_SWAP
 	p->q_head = 0;
 	p->q_tail = 0;
-	p->q_size = 0;
+	p->size_mem = 0;
 #endif
 	return createSwapFile(p);
 }
@@ -253,8 +253,8 @@ linkNewPage(struct proc *p, uint vpa)
 	LOGSWAP(cprintf(INFO_STR("linkNewPage: pid %d vpa %p\n"), p->pid, vpa);)
 	AssertPanic(PTE_FLAGS(vpa) ==0);
 	#ifdef FIFO_SWAP
-		LOGSWAP(cprintf(WARNING_STR("sz:%d head:%d tail:%d\n"),p->q_size,p->q_head,p->q_tail);)
-		if(p->q_size == MAX_PSYC_PAGES)
+		LOGSWAP(cprintf(WARNING_STR("sz:%d head:%d tail:%d\n"),p->size_mem,p->q_head,p->q_tail);)
+		if(p->size_mem == MAX_PSYC_PAGES)
 		{
 			LOGSWAP(cprintf(WARNING_STR("swap: queue full\n"));)
 			// queue is full , phy_mem full
@@ -286,7 +286,7 @@ linkNewPage(struct proc *p, uint vpa)
 			// add to tail
 			p->VPA_Memory[p->q_tail] = vpa;
 			p->q_tail = (p->q_tail + 1) % MAX_PSYC_PAGES;
-			p->q_size++;
+			p->size_mem++;
 			return 0;
 		}
 	#endif
@@ -305,26 +305,26 @@ unlinkPage(struct proc *p, uint vpa){
 #define CIRCLE_NEXT(x,y) ((x)+1==(y)?0:(x)+1)
 
 	int idx = p->q_head;
-	for (uint i = 0; i < p->q_size; i++, idx=CIRCLE_NEXT(idx, MAX_PSYC_PAGES)){
+	for (uint i = 0; i < p->size_mem; i++, idx=CIRCLE_NEXT(idx, MAX_PSYC_PAGES)){
 		if ((p->VPA_Memory[idx] )== (vpa)){
 			
-			while (i + 1 < p->q_size){
+			while (i + 1 < p->size_mem){
 				int nxt= CIRCLE_NEXT(idx, MAX_PSYC_PAGES);
 				p->VPA_Memory[idx] = p->VPA_Memory[nxt];
 				idx = nxt;
 				i++;
 			}
 			p->q_tail = idx;
-			p->q_size--;
-			if(p->q_size == 0)
+			p->size_mem--;
+			if(p->size_mem == 0)
 				AssertPanic(p->q_head == p->q_tail)
 			else if(p->q_head < p->q_tail)
 			{
-				cprintf("h %d t %d s %d\n",p->q_head,p->q_tail,p->q_size);
-				AssertPanic(p->q_tail-p->q_head == p->q_size)
+				cprintf("h %d t %d s %d\n",p->q_head,p->q_tail,p->size_mem);
+				AssertPanic(p->q_tail-p->q_head == p->size_mem)
 			}
 			else
-				AssertPanic(MAX_PSYC_PAGES - p->q_head + p->q_tail == p->q_size)
+				AssertPanic(MAX_PSYC_PAGES - p->q_head + p->q_tail == p->size_mem)
 			return 0;
 		}
 	}
