@@ -593,9 +593,15 @@ printSwapInfo(struct proc *p){
 #ifdef FIFO_SWAP
   cprintf("\tFIFO swap head %d tail %d size %d\n",p->q_head,p->q_tail,p->q_size);
 #endif
-  cprintf("\t");
-  for(int i=0;i<NELEM(p->VPN_Swap);i++){
-    cprintf("%p ",p->VPN_Swap[i]);
+  cprintf("VPA_Swap : ");
+  for(int i=0;i<NELEM(p->VPA_Swap);i++){
+    cprintf("%p ",p->VPA_Swap[i]);
+  }
+  cprintf("\n");
+
+  cprintf("VPA_Memory : ");
+  for(int i=0;i<NELEM(p->VPA_Memory);i++){
+    cprintf("%p ",p->VPA_Memory[i]);
   }
   cprintf("\n");
 }

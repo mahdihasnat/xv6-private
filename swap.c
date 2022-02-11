@@ -19,8 +19,8 @@ initSwap(struct proc *p)
 	LOGSWAP(cprintf("initSwap: p->pid %d\n", p->pid);)
 	AssertPanic(p->parent!=0);	
 	// called from fork
-	memmove(p->VPN_Swap, p->parent->VPN_Swap, sizeof(p->VPN_Swap));
-	memmove(p->VPN_Memory, p->parent->VPN_Memory, sizeof(p->VPN_Memory));
+	memmove(p->VPA_Swap, p->parent->VPA_Swap, sizeof(p->VPA_Swap));
+	memmove(p->VPA_Memory, p->parent->VPA_Memory, sizeof(p->VPA_Memory));
 	p->swapSize = p->parent->swapSize;
 	#ifdef FIFO_SWAP
 		p->q_head = p->parent->q_head;
@@ -57,8 +57,8 @@ int
 initFreshSwap(struct proc *p)
 {
 	LOGSWAP(cprintf(INFO_STR("initFreshSwap pid %d\n") , p->pid);)
-	memset(p->VPN_Swap, 0, sizeof(p->VPN_Swap));
-	memset(p->VPN_Memory, 0, sizeof(p->VPN_Memory));
+	memset(p->VPA_Swap, 0, sizeof(p->VPA_Swap));
+	memset(p->VPA_Memory, 0, sizeof(p->VPA_Memory));
 	p->swapSize = 0;
 #ifdef FIFO_SWAP
 	p->q_head = 0;
@@ -82,29 +82,59 @@ printSwapMetaData(struct proc *p)
 	
 }
 
+// restore swap pages to memory, called from exec
+int
+restoreSwap(struct proc *p)
+{
+	LOGSWAP(cprintf(DEBUG_STR("restoreSwap pid %d\n"),p->pid);)
+	
+	for(int i=0;i<p->swapSize;i++)
+	{
+		uint vpa = p->VPA_Swap[i];
+		AssertPanic(vpa!=0);
+		pte_t *pte = walkpgdir(p->pgdir, (void *)vpa, 0);
+		AssertPanic(pte!=0);
+		AssertPanic((*pte & PTE_PG));
+		AssertPanic(!(*pte & PTE_P));
+		int flags = PTE_FLAGS(*pte);
+		flags |= ~ PTE_PG;
+		flags |= PTE_P;
+		char * mem = kalloc();
+		if(mem == 0)
+		{
+			cprintf(ERROR_STR("restoreSwap: kalloc failed\n"));
+			return -1;
+		}
+		*pte = V2P(mem) | flags;
+		// switchuvm(p);
+	}
+	return 0;
+}
+
+
 
 void
 moveToSwap(struct proc *p, uint idx)
 {
 	LOGSWAP(cprintf("moveToSwap: p->pid %d idx %d\n", p->pid, idx);)
 	AssertPanic(idx < MAX_PSYC_PAGES);
-	uint vpn_perm = p->VPN_Memory[idx];
+	uint vpa = p->VPA_Memory[idx];
+	AssertPanic(PTE_FLAGS(vpa)==0);
 	pte_t *pte ;
-	AssertPanic((pte =(pte_t *) walkpgdir(p->pgdir, (void *)PTE_ADDR(vpn_perm), 0))!= 0); // get pte from pagetable
-	vpn_perm = PTE_ADDR(vpn_perm) | PTE_FLAGS(*pte); // get current vpn with permission of page entry
+	AssertPanic((pte =(pte_t *) walkpgdir(p->pgdir, (void *)(vpa), 0))!= 0); // get pte from pagetable
 	cprintf("moveto swap pte %x *pte %p\n",pte, *pte);
 	*pte &= ~(PTE_P); // unset pte_p
 	*pte |= PTE_PG; // set pte_pg
-	switchuvm(p);
-	{
-		pte_t *Pte = (pte_t *) walkpgdir(p->pgdir, (void *)PTE_ADDR(vpn_perm), 0);
-		AssertPanic(pte == Pte);
-	}
+	// switchuvm(p);
+	// {
+	// 	pte_t *Pte = (pte_t *) walkpgdir(p->pgdir, (void *)PTE_ADDR(vpa), 0);
+	// 	AssertPanic(pte == Pte);
+	// }
 	char * mem = P2V(PTE_ADDR(*pte)); // get mem address of page 
-	cprintf(INFO_STR("moveToSwap: %d %d %p %p  swsz:%d\n"), p->pid, idx, vpn_perm, mem, p->swapSize);
+	cprintf(INFO_STR("moveToSwap: pid %d idx %d vpa %p %p  swsz:%d\n"), p->pid, idx, vpa, mem, p->swapSize);
 	AssertPanic(writeToSwapFile(p,mem,(p->swapSize)*PGSIZE , PGSIZE) == PGSIZE); // write to swap file
 	kfree(mem); // free memory from memory
-	p->VPN_Swap[p->swapSize] = vpn_perm; // set vpn with permission of page entry in swap index
+	p->VPA_Swap[p->swapSize] = vpa; // set vpa  of page entry in swap index
 	p->swapSize++;
 }
 
@@ -116,7 +146,7 @@ swapFillGap(struct proc *p,uint idx){
 	AssertPanic(idx < MAX_SWAP_PAGES);
 	AssertPanic(p->swapSize > idx);
 	p->swapSize--;
-	p->VPN_Swap[idx] = p->VPN_Swap[p->swapSize];
+	p->VPA_Swap[idx] = p->VPA_Swap[p->swapSize];
 	if(idx == p->swapSize)
 		return 0;
 	char * buff = kalloc();
@@ -146,7 +176,7 @@ int
 moveFromSwap(struct proc *p, uint vpa, char * mem){
 	AssertPanic(PTE_FLAGS(vpa) == 0);
 	for(int i=0;i<MAX_SWAP_PAGES;i++){
-		if((p->VPN_Swap[i]) == vpa){
+		if((p->VPA_Swap[i]) == vpa){
 			cprintf(INFO_STR("moveFromSwap: %d %d %p %p  swsz:%d\n"), p->pid, i, vpa, mem, p->swapSize);
 			if(readFromSwapFile(p, mem, i*PGSIZE, PGSIZE) != PGSIZE)
 			{
@@ -196,10 +226,9 @@ linkNewPage(struct proc *p, uint vpa)
 				// swap file not full
 				// move page to swap file
 				moveToSwap(p,p->q_head);
-				p->VPN_Memory[p->q_tail]= vpa;
+				p->VPA_Memory[p->q_tail]= vpa;
 				p->q_tail = (p->q_tail + 1) % MAX_PSYC_PAGES;
 				p->q_head = (p->q_head + 1) % MAX_PSYC_PAGES;
-				p->q_size++;
 				return 0;
 			}
 		}
@@ -207,7 +236,7 @@ linkNewPage(struct proc *p, uint vpa)
 		{
 			
 			// add to tail
-			p->VPN_Memory[p->q_tail] = vpa;
+			p->VPA_Memory[p->q_tail] = vpa;
 			p->q_tail = (p->q_tail + 1) % MAX_PSYC_PAGES;
 			p->q_size++;
 			return 0;
@@ -226,11 +255,11 @@ unlinkPage(struct proc *p, uint vpa){
 #ifdef FIFO_SWAP
 	int idx = p->q_head;
 	for (uint i = 0; i < p->q_size; i++, idx=CIRCLE_NEXT(idx, MAX_PSYC_PAGES)){
-		if ((p->VPN_Memory[idx] )== (vpa)){
+		if ((p->VPA_Memory[idx] )== (vpa)){
 			
 			while (i + 1 < p->q_size){
 				int nxt= CIRCLE_NEXT(idx, MAX_PSYC_PAGES);
-				p->VPN_Memory[idx] = p->VPN_Memory[nxt];
+				p->VPA_Memory[idx] = p->VPA_Memory[nxt];
 				idx = nxt;
 				i++;
 			}
@@ -250,7 +279,7 @@ unlinkPage(struct proc *p, uint vpa){
 	}
 #endif
 	for(int i=0;i<p->swapSize;i++){
-		if((p->VPN_Swap[i]) == (vpa)){
+		if((p->VPA_Swap[i]) == (vpa)){
 			swapFillGap(p,i);
 			return 0;
 		}
@@ -299,5 +328,6 @@ recoverPageFault(uint va){
 		kfree(mem);
 		return -1;
 	}
+	// switchuvm(p);
 	return 0;
 }

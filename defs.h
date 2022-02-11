@@ -206,12 +206,17 @@ void 			initFirstProcessSwap(struct proc *);
 int				linkNewPage(struct proc *, uint);
 int 			unlinkPage(struct proc *, uint);
 int				recoverPageFault(uint );
+int				restoreSwap(struct proc *);
 
 // color code for terminal
 #define ANSI_COLOR_GREEN "\x1b[32m"
 #define ANSI_COLOR_RED "\x1b[31m"
 #define ANSI_COLOR_RESET "\x1b[0m"
 #define ANSI_COLOR_YELLOW "\x1b[33m"
+#define ANSI_COLOR_BLUE "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN "\x1b[36m"
+#define ANSI_COLOR_WHITE "\x1b[37m"
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
@@ -229,3 +234,5 @@ int				recoverPageFault(uint );
 #define ERROR_STR(x) ANSI_COLOR_RED x ANSI_COLOR_RESET
 #define WARNING_STR(x) ANSI_COLOR_YELLOW x ANSI_COLOR_RESET
 #define INFO_STR(x) ANSI_COLOR_GREEN x ANSI_COLOR_RESET
+#define DEBUG_STR(x) ANSI_COLOR_BLUE x ANSI_COLOR_RESET
+#define MAGENTA_STR(x) ANSI_COLOR_MAGENTA x ANSI_COLOR_RESET
