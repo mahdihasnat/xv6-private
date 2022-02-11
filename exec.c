@@ -40,13 +40,15 @@ exec(char *path, char **argv)
 
   if(curproc->pid == 1)
   {
+    // init already 1 ta page allocate korse, boot time [ almost ] e  ,
+    // ekhon abar 3 ta allocate korbe
     AssertPanic(initFreshSwap(curproc) == 0);
   }
   else 
   {
     AssertPanic(restoreSwap(curproc) == 0);
     AssertPanic(destroySwap(curproc) == 0);
-    AssertPanic(initSwap(curproc) == 0);
+    AssertPanic(initFreshSwap(curproc) == 0);
   }
 
   // Load program into memory.
