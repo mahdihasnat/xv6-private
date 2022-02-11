@@ -53,6 +53,8 @@ struct proc {
   struct file *swapFile;			//page file
   uint VPA_Swap[MAX_SWAP_PAGES];	//VPN of pages in swap file , [20 bit for VPN] [12 bit for swap flag]
   uint VPA_Memory[MAX_PSYC_PAGES]; //VPN of pages in memory
+  // we are using different size_mem for total pages in memory 
+  // we should get it from sz , but there are chance that sz is inaccurate for some process like init ¯\_(ツ)_/¯
   uint size_mem; // size of queue in memory [fifo] | total entries in memory [nfu]
 #ifdef FIFO_SWAP
   int q_head; /// front of queue , initially 0 , +=1 if pop 
