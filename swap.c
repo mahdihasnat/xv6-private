@@ -7,8 +7,11 @@
 #include "proc.h"
 #include "spinlock.h"
 
+#include "swap.h"
+
 #define LOGSWAP(x) x
 // #define LOGSWAP(x)
+
 
 // swap is called either from fork or [userinit|exec]
 // this method is called from fork
@@ -21,7 +24,6 @@ initSwap(struct proc *p)
 	// called from fork
 	memmove(p->VPA_Swap, p->parent->VPA_Swap, sizeof(p->VPA_Swap));
 	memmove(p->VPA_Memory, p->parent->VPA_Memory, sizeof(p->VPA_Memory));
-	p->swapSize = p->parent->swapSize;
 	#ifdef FIFO_SWAP
 		p->q_head = p->parent->q_head;
 		p->q_tail = p->parent->q_tail;	
@@ -34,8 +36,11 @@ initSwap(struct proc *p)
 	}
 	char *buff=0;
 	AssertPanic((buff = kalloc()) != 0);
-	for(int i=0;i<p->swapSize;i++){
+	for(int i=0;i<NELEM(p->VPA_Swap);i++){
 		
+		if(!(p->VPA_Swap[i]&SWAP_P))
+			continue;
+
 		if(readFromSwapFile(p->parent, buff, i *PGSIZE, PGSIZE)<0){
 			cprintf(ERROR_STR("initSwap: readFromParentSwapFile failed\n"));
 			removeSwapFile(p);
@@ -59,7 +64,6 @@ initFreshSwap(struct proc *p)
 	LOGSWAP(cprintf(INFO_STR("initFreshSwap pid %d\n") , p->pid);)
 	memset(p->VPA_Swap, 0, sizeof(p->VPA_Swap));
 	memset(p->VPA_Memory, 0, sizeof(p->VPA_Memory));
-	p->swapSize = 0;
 #ifdef FIFO_SWAP
 	p->q_head = 0;
 	p->q_tail = 0;
@@ -88,9 +92,12 @@ restoreSwap(struct proc *p)
 {
 	LOGSWAP(cprintf(DEBUG_STR("restoreSwap pid %d\n"),p->pid);)
 	
-	for(int i=0;i<p->swapSize;i++)
+	for(int i=0;i<NELEM(p->VPA_Swap);i++)
 	{
-		uint vpa = p->VPA_Swap[i];
+		// ignore if not present
+		if(!((p->VPA_Swap[i])&SWAP_P))
+			continue;
+		uint vpa = SWAP_ADDR(p->VPA_Swap[i]);
 		AssertPanic(vpa!=0);
 		pte_t *pte = walkpgdir(p->pgdir, (void *)vpa, 0);
 		AssertPanic(pte!=0);
@@ -111,33 +118,67 @@ restoreSwap(struct proc *p)
 }
 
 
-
-void
-moveToSwap(struct proc *p, uint idx)
+// return available index pages in swap file
+static int
+getFreeSwapPageIndex(struct proc *p)
 {
-	LOGSWAP(cprintf("moveToSwap: p->pid %d idx %d\n", p->pid, idx);)
-	AssertPanic(idx < MAX_PSYC_PAGES);
-	uint vpa = p->VPA_Memory[idx];
-	AssertPanic(PTE_FLAGS(vpa)==0);
+	for(int i=0;i<NELEM(p->VPA_Swap);i++)
+	{
+		if(!(p->VPA_Swap[i]&SWAP_P))
+			return i;
+	}
+	return -1;
+}
+
+static int
+moveToSwap(struct proc *p, uint idx_mem,uint idx_swap)
+{
+	
+	AssertPanic(idx_mem < MAX_PSYC_PAGES);
+	AssertPanic(idx_swap < MAX_SWAP_PAGES);
+
+	uint vpa = p->VPA_Memory[idx_mem]; // virtual page address
+	AssertPanic(PTE_FLAGS(vpa)==0); // last 12 bits are zero
+
 	pte_t *pte ;
-	AssertPanic((pte =(pte_t *) walkpgdir(p->pgdir, (void *)(vpa), 0))!= 0); // get pte from pagetable
-	cprintf("moveto swap pte %x *pte %p\n",pte, *pte);
+	if((pte =(pte_t *) walkpgdir(p->pgdir, (void *)(vpa), 0))== 0) // get pte from pagetable
+	{
+		cprintf(ERROR_STR("moveToSwap: walkpgdir failed VPA_Memory is dirty\n"));
+		return -1;
+	}
+
+	char * mem = P2V(PTE_ADDR(*pte)); // get mem address of page
+	if(mem == 0)
+	{
+		cprintf(ERROR_STR("moveToSwap: memory not found in PTE Entry\n"));
+		return -1;
+	}
+
+	if(writeToSwapFile(p, mem, idx_swap * PGSIZE, PGSIZE)!=PGSIZE)
+	{
+		cprintf(ERROR_STR("moveToSwap: writeToSwapFile failed\n"));
+		return -1;
+	}
+	p->VPA_Swap[idx_swap] = SWAP_P | vpa;
+
 	*pte &= ~(PTE_P); // unset pte_p
 	*pte |= PTE_PG; // set pte_pg
-	// {
+	
+
+	kfree(mem);
+
+	// { sanity test 
 	// 	pte_t *Pte = (pte_t *) walkpgdir(p->pgdir, (void *)PTE_ADDR(vpa), 0);
 	// 	AssertPanic(pte == Pte);
 	// }
-	char * mem = P2V(PTE_ADDR(*pte)); // get mem address of page 
-	cprintf(INFO_STR("moveToSwap: pid %d idx %d vpa %p %p  swsz:%d\n"), p->pid, idx, vpa, mem, p->swapSize);
-	AssertPanic(writeToSwapFile(p,mem,(p->swapSize)*PGSIZE , PGSIZE) == PGSIZE); // write to swap file
-	kfree(mem); // free memory from memory
-	p->VPA_Swap[p->swapSize] = vpa; // set vpa  of page entry in swap index
-	p->swapSize++;
+
+	return 0;
 }
 
 // move last page to idx & update size
 // return 0 on success
+// wont use this since we are storing present bit in VPA_Swap
+/*
 int
 swapFillGap(struct proc *p,uint idx){
 	AssertPanic(p->swapSize > 0);
@@ -168,24 +209,31 @@ swapFillGap(struct proc *p,uint idx){
 	kfree(buff);
 	return 0;
 }
+*/
 
 // move page from swap to mem , return 0 on success or -1 on error
 int
 moveFromSwap(struct proc *p, uint vpa, char * mem){
 	AssertPanic(PTE_FLAGS(vpa) == 0);
-	for(int i=0;i<MAX_SWAP_PAGES;i++){
-		if((p->VPA_Swap[i]) == vpa){
-			cprintf(INFO_STR("moveFromSwap: %d %d %p %p  swsz:%d\n"), p->pid, i, vpa, mem, p->swapSize);
+
+	for(int i=0;i<NELEM(p->VPA_Swap);i++){
+		if(!(p->VPA_Swap[i] & SWAP_P))
+			continue;
+
+		if(SWAP_ADDR(p->VPA_Swap[i]) == vpa){
+			
 			if(readFromSwapFile(p, mem, i*PGSIZE, PGSIZE) != PGSIZE)
 			{
 				cprintf(ERROR_STR("moveFromSwap: readFromSwapFile failed\n"));
 				return -1;
 			}
-			if(swapFillGap(p, i)!=0)
-			{
-				cprintf(ERROR_STR("moveFromSwap: swapFillGap failed\n"));
-				return -1;
-			}
+			
+			p->VPA_Swap[i] = 0;
+			// if(swapFillGap(p, i)!=0)
+			// {
+			// 	cprintf(ERROR_STR("moveFromSwap: swapFillGap failed\n"));
+			// 	return -1;
+			// }
 			return 0;
 		}
 	}
@@ -212,18 +260,20 @@ linkNewPage(struct proc *p, uint vpa)
 			// queue is full , phy_mem full
 			AssertPanic(p->q_head == p->q_tail);
 
-			if(p->swapSize +  MAX_PSYC_PAGES == MAX_TOTAL_PAGES)
+			int idx_swap = getFreeSwapPageIndex(p);
+
+
+			if(idx_swap == -1)
 			{
-				LOGSWAP(cprintf(WARNING_STR("swap: swap full\n"));)
-				// swap file full
-				LOG("process exceeded max  page limit");
+				cprintf(ERROR_STR("linkNewPage: getFreeSwapPageIndex failed | max number of pages reached\n"));
 				return -1;
 			}
 			else
 			{
+				LOGSWAP(cprintf(INFO_STR("linkNewPage: moving mem %d -> %d swap\n"),p->q_head, idx_swap);)
 				// swap file not full
 				// move page to swap file
-				moveToSwap(p,p->q_head);
+				moveToSwap(p,p->q_head, idx_swap);
 				p->VPA_Memory[p->q_tail]= vpa;
 				p->q_tail = (p->q_tail + 1) % MAX_PSYC_PAGES;
 				p->q_head = (p->q_head + 1) % MAX_PSYC_PAGES;
@@ -242,7 +292,7 @@ linkNewPage(struct proc *p, uint vpa)
 	#endif
 }
 
-#define CIRCLE_NEXT(x,y) ((x)+1==(y)?0:(x)+1)
+
 
 // Return zero on success
 // Delete the page link from swap file or memory
@@ -250,7 +300,10 @@ int
 unlinkPage(struct proc *p, uint vpa){
 	LOGSWAP(cprintf(INFO_STR("unlinkPage: pid %d vpa %p\n"), p->pid, vpa);)
 	AssertPanic(PTE_FLAGS(vpa) == 0);
+
 #ifdef FIFO_SWAP
+#define CIRCLE_NEXT(x,y) ((x)+1==(y)?0:(x)+1)
+
 	int idx = p->q_head;
 	for (uint i = 0; i < p->q_size; i++, idx=CIRCLE_NEXT(idx, MAX_PSYC_PAGES)){
 		if ((p->VPA_Memory[idx] )== (vpa)){
@@ -276,9 +329,12 @@ unlinkPage(struct proc *p, uint vpa){
 		}
 	}
 #endif
-	for(int i=0;i<p->swapSize;i++){
-		if((p->VPA_Swap[i]) == (vpa)){
-			swapFillGap(p,i);
+	for(int i=0;i<NELEM(p->VPA_Swap);i++){
+		if(!(p->VPA_Swap[i]&SWAP_P))
+			continue;
+		if(SWAP_ADDR(p->VPA_Swap[i]) == (vpa)){
+			// swapFillGap(p,i);
+			p->VPA_Swap[i] = 0;
 			return 0;
 		}
 	}
@@ -299,20 +355,22 @@ recoverPageFault(uint va){
 	
 	if(pte == 0)
 		return -1;
-	
-	
 
 	LOGSWAP(cprintf("recoverPageFault: %d  vpa %p  pte %p  *pte %p\n", p->pid, vpa,pte, *pte);)
 
 	if(!(*pte & PTE_PG))
 		return -1;
 	
-	
 
 	char * mem = kalloc();
-	AssertPanic(mem != 0);
+	if(mem == 0)
+	{
+		cprintf(ERROR_STR("recoverPageFault: kalloc failed\n"));
+		return -1;
+	}
 	int flags = PTE_FLAGS(*pte);
 	if((moveFromSwap(p, vpa, mem)) < 0){
+		cprintf(ERROR_STR("recoverPageFault: moveFromSwap failed | swap file dirty\n"));
 		kfree(mem);
 		return -1;
 	}

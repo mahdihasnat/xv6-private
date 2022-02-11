@@ -72,3 +72,4 @@ simulator and run "make qemu".
 - Added basic swapfile linking [for new pages allocated] in swap.c
 - Sufferred from many trap
 - Added time.c in user programs
+- Added bit lebel checking in swap metadata[ faaaster]
