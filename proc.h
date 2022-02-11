@@ -51,8 +51,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   //Swap file. must initiate with create swap file
   struct file *swapFile;			//page file
-  uint swapSize;							//size of swap file
-  uint VPA_Swap[MAX_SWAP_PAGES];	//VPN of pages in swap file
+  uint VPA_Swap[MAX_SWAP_PAGES];	//VPN of pages in swap file , [20 bit for VPN] [12 bit for swap flag]
   uint VPA_Memory[MAX_PSYC_PAGES]; //VPN of pages in memory
 #ifdef FIFO_SWAP
   int q_head; /// front of queue , initially 0 , +=1 if pop 
