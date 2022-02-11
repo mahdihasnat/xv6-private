@@ -258,7 +258,7 @@ exit(void)
   end_op();
   curproc->cwd = 0;
 
-  // AssertPanic(destroySwap(curproc)==0);
+  AssertPanic(destroySwap(curproc)==0);
 
   acquire(&ptable.lock);
 

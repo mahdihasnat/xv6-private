@@ -8,8 +8,9 @@
 #include "spinlock.h"
 
 #define LOGSWAP(x) x
+// #define LOGSWAP(x) 
 
-
+// read a page from swap
 int
 swapIn(struct proc *p ,char * buff,uint vpa)
 {
@@ -170,13 +171,33 @@ destroySwap(struct proc *p)
 	return removeSwapFile(p);
 }
 
+
+// must have pte entry, and pte entry must be valid
+// doesnot change pte entry , just write to swap file
+// mem is a buffer of size PGSIZE given 
+// 0 on success
+// -1 on failure
+int
+forceWriteBack(struct proc *p, uint vpa, char *mem)
+{
+	AssertPanic(PTE_FLAGS(vpa) == 0);
+	LOGSWAP(cprintf(DEBUG_STR("forceWriteBack: pid %p, vpa %p\n"),p->pid, vpa);)
+	if(writeToSwapFile(p, mem,vpa , PGSIZE) != PGSIZE)
+	{
+		cprintf(ERROR_STR("forceWriteBack: writeToSwapFile failed\n"));
+		return -1;
+	}
+	return 0;
+}
+
+// swap out, changes in pte
 static int
 swapOut(struct proc *p, uint vpa)
 {
-	LOGSWAP(cprintf("swapOut: p->pid %d, vpa %d\n", p->pid, vpa);)
+	LOGSWAP(cprintf("swapOut: p->pid %d, vpa %p\n", p->pid, vpa);)
 	pte_t * pte = walkpgdir(p->pgdir, (void *)vpa, 0);
 	AssertPanic(pte != 0);
-	AssertPanic(!(*pte & PTE_P));
+	AssertPanic((*pte & PTE_P));
 	LOGSWAP(cprintf("swapOut: pte %p *pte \n", pte, *pte);)
 	if((*pte) & PTE_D)
 	{
@@ -225,7 +246,9 @@ linkNewPage(struct proc *p, uint vpa)
 		{
 			// swap file not full
 			// move page to swap file
-			cprintf(WARNING_STR("linkNewPage: swap file not full, totalPage = %d\n"),p->totaPages);
+			LOGSWAP(cprintf(WARNING_STR("linkNewPage: swap file not full, totalPage = %d\n"),p->totaPages);)
+			LOGSWAP(cprintf(INFO_STR("prinitng swap info\n"));)
+			LOGSWAP(printSwapInfo(p);)
 			if(swapOut(p, p->VPA_Memory[p->q_head])<0)
 			{
 				cprintf(ERROR_STR("linkNewPage: swapOut failed\n"));

@@ -125,6 +125,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+void 			printSwapInfo(struct proc *);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -207,7 +208,7 @@ int 			unlinkPage(struct proc *, uint);
 int				recoverPageFault(uint );
 int				copySwapPage(struct proc*, struct proc*, uint );
 int 			restoreSwap(struct proc *);
-
+int 			forceWriteBack(struct proc *, uint,char *);
 // color code for terminal
 #define ANSI_COLOR_GREEN "\x1b[32m"
 #define ANSI_COLOR_RED "\x1b[31m"
