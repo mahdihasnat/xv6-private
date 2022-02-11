@@ -338,18 +338,18 @@ copyuvm(pde_t *pgdir, uint sz, struct proc *p)
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
       panic("copyuvm: pte should exist");
-    if((*pte & PTE_PG))
-    {
-      copySwapPage(p->parent , p , i);
-      p->totaPages++;
-      pa = PTE_ADDR(*pte);
-      flags = PTE_FLAGS(*pte);
-      pte_t * newPte = walkpgdir(d, (void *) i, 1);
-      AssertPanic(newPte != 0);
-      *newPte = PTE_FLAGS( *pte);
-      continue;
-    }
-    else if(!(*pte & PTE_P))
+    // if((*pte & PTE_PG))
+    // {
+    //   copySwapPage(p->parent , p , i);
+    //   p->totaPages++;
+    //   pa = PTE_ADDR(*pte);
+    //   flags = PTE_FLAGS(*pte);
+    //   pte_t * newPte = walkpgdir(d, (void *) i, 1);
+    //   AssertPanic(newPte != 0);
+    //   *newPte = PTE_FLAGS( *pte);
+    //   continue;
+    // }
+    if(!(*pte & PTE_P))
       panic("copyuvm: page not present");
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
