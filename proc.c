@@ -591,7 +591,7 @@ void
 printSwapInfo(struct proc *p){
   cprintf("Swap info:\n");
 #ifdef FIFO_SWAP
-  cprintf("\tFIFO swap head %d tail %d size %d\n",p->q_head,p->q_tail,p->q_size);
+  cprintf("\tFIFO swap head %d tail %d size %d\n",p->q_head,p->q_tail,p->size_mem);
 #endif
   cprintf("VPA_Swap : ");
   for(int i=0;i<NELEM(p->VPA_Swap);i++){
