@@ -38,8 +38,16 @@ exec(char *path, char **argv)
   if((pgdir = setupkvm()) == 0)
     goto bad;
 
-  // create swapfor this new program as well
-  AssertPanic(initFreshSwap(curproc)==0);
+  if(curproc->pid == 1)
+  {
+    AssertPanic(initFreshSwap(curproc) == 0);
+  }
+  else 
+  {
+    AssertPanic(restoreSwap(curproc) == 0);
+    AssertPanic(destroySwap(curproc) == 0);
+    AssertPanic(initSwap(curproc) == 0);
+  }
 
   // Load program into memory.
   sz = PGSIZE;

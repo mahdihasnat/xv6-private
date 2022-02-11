@@ -14,6 +14,12 @@ fifo_test(uint max_page)
 	{
 		sbrk(PGSIZE);
 	}
+	
+	for(uint i=currsize;i<max_page * PGSIZE;i+=PGSIZE)
+	{
+		sbrk(-PGSIZE);
+	}
+
 	return 0;
 }
 
@@ -99,7 +105,7 @@ fork_test2()
 
 int
 main(int argc, char * argv[]){
-	if(fifo_test(0)==0)
+	if(fifo_test(10)==0)
 		printf(1,"fifo test passed\n");
 	else
 		printf(1,"fifo test failed\n");
