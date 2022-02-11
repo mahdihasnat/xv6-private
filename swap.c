@@ -24,10 +24,12 @@ initSwap(struct proc *p)
 	// called from fork
 	memmove(p->VPA_Swap, p->parent->VPA_Swap, sizeof(p->VPA_Swap));
 	memmove(p->VPA_Memory, p->parent->VPA_Memory, sizeof(p->VPA_Memory));
+	p->size_mem = p->parent->size_mem;	
+
 	#ifdef FIFO_SWAP
 		p->q_head = p->parent->q_head;
 		p->q_tail = p->parent->q_tail;	
-		p->size_mem = p->parent->size_mem;	
+		
 	#endif
 	#ifdef NFU_SWAP
 		// noting to do
@@ -67,10 +69,11 @@ initFreshSwap(struct proc *p)
 	LOGSWAP(cprintf(INFO_STR("initFreshSwap pid %d\n") , p->pid);)
 	memset(p->VPA_Swap, 0, sizeof(p->VPA_Swap));
 	memset(p->VPA_Memory, 0, sizeof(p->VPA_Memory));
+	p->size_mem = 0;
 #ifdef FIFO_SWAP
 	p->q_head = 0;
 	p->q_tail = 0;
-	p->size_mem = 0;
+	
 #endif
 #ifdef NFU_SWAP
 	// noting to do
@@ -103,7 +106,6 @@ restoreSwap(struct proc *p)
 		if(!((p->VPA_Swap[i])&SWAP_P))
 			continue;
 		uint vpa = SWAP_ADDR(p->VPA_Swap[i]);
-		AssertPanic(vpa!=0);
 		pte_t *pte = walkpgdir(p->pgdir, (void *)vpa, 0);
 		AssertPanic(pte!=0);
 		AssertPanic((*pte & PTE_PG));
@@ -119,8 +121,11 @@ restoreSwap(struct proc *p)
 			return -1;
 		}
 		uint new_val =  V2P(mem) | flags;
-		*pte = new_val; // cr3 te pgdir update kora lagbe na, 
-		// karon eta parent process theke call hoy, exec korle
+		AssertPanic(V2P(p->pgdir) == rcr3());
+		*pte = new_val; 
+		lcr3(V2P(p->pgdir));
+		AssertPanic(V2P(p->pgdir) == rcr3());
+		// cr3 te pgdir update kora lagbe ,  karon etai bortoman process er pgdir e
 	}
 	return 0;
 }
