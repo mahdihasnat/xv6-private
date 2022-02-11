@@ -343,6 +343,9 @@ copyuvm(pde_t *pgdir, uint sz)
       pte_t * newPte = walkpgdir(d, (void *) i, 1);
       AssertPanic(newPte != 0);
       *newPte = PTE_FLAGS( *pte);
+      // ekhane lcr3 korbo na , karon current process er table na
+      AssertPanic(V2P(d)!=rcr3());
+      AssertPanic(V2P(pgdir)==rcr3());
       continue;
     }
     if(!(*pte & PTE_P))
