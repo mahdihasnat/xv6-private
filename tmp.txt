@@ -1,0 +1,56 @@
+diff --git a//Makefile b//Makefile
+index 7a5a05f..464892b 100644
+--- a/Makefile	
++++ b/Makefile	
+@@ -183,6 +183,7 @@ UPROGS=\
+ 	_sh\
+ 	_shutdown\
+ 	_stressfs\
++	_time\
+ 	_userp\
+ 	_usertests\
+ 	_wc\
+@@ -258,7 +259,7 @@ EXTRA=\
+ 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
+ 	printf.c umalloc.c\
+ 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
+-	.gdbinit.tmpl gdbutil userp.c add.c date.c shutdown.c\
++	.gdbinit.tmpl gdbutil userp.c add.c date.c shutdown.c time.c\
+ 
+ dist:
+ 	rm -rf dist
+diff --git a/Operating System/xv6 Practice/xv6-public/time.c b/Operating System/xv6 Practice/xv6-public/time.c
+new file mode 100644
+index 0000000..ff399ee
+--- /dev/null
++++ b/Operating System/xv6 Practice/xv6-public/time.c	
+@@ -0,0 +1,28 @@
++#include "types.h"
++#include "user.h"
++
++
++int
++main(int argc, char * argv[])
++{
++	int startTicks = uptime();
++	int x = fork();
++	if(x<0)
++	{
++		printf(1,"fork failed\n");
++		exit();
++	}
++	else if(x==0)
++	{
++		if(argc == 1)
++			exit();
++		exec(argv[1] , argv+1);
++	}
++	else
++	{
++		wait();
++		int stopTicks = uptime();
++		printf(1,"\ntime: %d ticks\n",stopTicks-startTicks);
++		exit();
++	}
++}
+\ No newline at end of file
