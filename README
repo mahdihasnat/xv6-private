@@ -50,6 +50,10 @@ x86 ELF binaries (see https://pdos.csail.mit.edu/6.828/).
 Then run "make TOOLPREFIX=i386-jos-elf-". Now install the QEMU PC
 simulator and run "make qemu".
 
+# Debug
+- `kfree` panic - cause inappropriate calculation of flags in page table entry 
+
+
 # Changelog
 - Added size check in mappages
 - Added PGADDRBIT constant in mmu.h
