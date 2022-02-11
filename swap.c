@@ -471,3 +471,28 @@ recoverPageFault(uint va){
 	
 	return 0;
 }
+
+
+#ifdef NFU_SWAP
+// update conunter of pages
+void
+nfu_Increment_Counter(struct proc *p)
+{
+	if(p==0)
+		return;
+	LOGSWAP(cprintf("nfu_Increment_Counter: pid %d\n", p->pid);)
+	for(uint i=0;i<p->size_mem;i++)
+	{
+		uint vpa = MEM_ADDR(p->VPA_Memory[i]);
+		pte_t *pte = walkpgdir(p->pgdir,(char *) vpa, 0);
+		AssertPanic(pte != 0);
+		if(*pte & PTE_A)
+		{
+			LOGSWAP(cprintf(MAGENTA_STR("nfu_Increment_Counter: pid %d vpa %p\n"), p->pid, vpa);)
+			uint cnt = NFU_MEM_COUNTER(p->VPA_Memory[i]);
+			cnt++;
+			p->VPA_Memory[i] = vpa | MEM_P | NFU_MEM_COUNTER(cnt);
+		}
+	}
+}
+#endif
