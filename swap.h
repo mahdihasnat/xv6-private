@@ -23,5 +23,6 @@
 #ifdef 		NFU_SWAP
 
 #define 	NFU_MEM_COUNTER(x)  ((uint)(x) &  0x7FF)
+#define 	NFU_COUNTER_MASK	0x7FF
 
 #endif
