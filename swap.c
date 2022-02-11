@@ -78,7 +78,6 @@ initFreshSwap(struct proc *p)
 	return createSwapFile(p);
 }
 
-
 int
 destroySwap(struct proc *p)
 {
@@ -110,15 +109,18 @@ restoreSwap(struct proc *p)
 		AssertPanic((*pte & PTE_PG));
 		AssertPanic(!(*pte & PTE_P));
 		int flags = PTE_FLAGS(*pte);
-		flags |= ~ PTE_PG;
+		flags &= ~ PTE_PG;
 		flags |= PTE_P;
 		char * mem = kalloc();
+		cprintf(DEBUG_STR("restoreSwap: read from swap file vpa %x pid: %d\n"), vpa, p->pid);
 		if(mem == 0)
 		{
 			cprintf(ERROR_STR("restoreSwap: kalloc failed\n"));
 			return -1;
 		}
-		*pte = V2P(mem) | flags;
+		uint new_val =  V2P(mem) | flags;
+		*pte = new_val; // cr3 te pgdir update kora lagbe na, 
+		// karon eta parent process theke call hoy, exec korle
 	}
 	return 0;
 }
@@ -136,10 +138,11 @@ getFreeSwapPageIndex(struct proc *p)
 	return -1;
 }
 
+// 
 static int
 moveToSwap(struct proc *p, uint idx_mem,uint idx_swap)
 {
-	
+	LOGSWAP(cprintf(DEBUG_STR("moveToSwap: idx_mem %d idx_swap %d\n"), idx_mem, idx_swap);)
 	AssertPanic(idx_mem < MAX_PSYC_PAGES);
 	AssertPanic(idx_swap < MAX_SWAP_PAGES);
 
@@ -167,9 +170,15 @@ moveToSwap(struct proc *p, uint idx_mem,uint idx_swap)
 	}
 	p->VPA_Swap[idx_swap] = SWAP_P | vpa;
 
-	*pte &= ~(PTE_P); // unset pte_p
-	*pte |= PTE_PG; // set pte_pg
-	
+	uint new_val = (*pte & ~PTE_P)|PTE_PG;
+	// *pte &= ~(PTE_P); // unset pte_p
+	// *pte |= PTE_PG; // set pte_pg
+	AssertPanic(myproc() == p);
+	AssertPanic(V2P(p->pgdir) == rcr3());
+	// nijer process table update kortese , so tlb upd
+	*pte = new_val;
+	lcr3(V2P(p->pgdir));
+	AssertPanic(V2P(p->pgdir) == rcr3());
 
 	kfree(mem);
 
@@ -441,17 +450,19 @@ recoverPageFault(uint va){
 		kfree(mem);
 		return -1;
 	}
+	AssertPanic(flags & PTE_PG);
+	AssertPanic(!(flags & PTE_P));
 	// clear PTE_PG 
 	flags &= ~PTE_PG;
 	// set PTE_P
-	// flags |= PTE_P; // in mappages
+	flags |= PTE_P;
 	
-	if(mappages(p->pgdir, (void*)vpa, PGSIZE, V2P(mem), flags) < 0){
-		cprintf(ERROR_STR("recoverPageFault: mappages failed\n"));
-		kfree(mem);
-		return -1;
-	}
+	AssertPanic(rcr3() == V2P(p->pgdir));
+	// nijer page table , so joto taratari somvob cr3 update kore tlb thik korte hobe
+	*pte = V2P(mem)| flags;
+	lcr3(V2P(p->pgdir));
+
+	AssertPanic(rcr3() == V2P(p->pgdir));
 	
-	// switchuvm(p);
 	return 0;
 }
