@@ -106,7 +106,6 @@ restoreSwap(struct proc *p)
 			return -1;
 		}
 		*pte = V2P(mem) | flags;
-		// switchuvm(p);
 	}
 	return 0;
 }
@@ -125,7 +124,6 @@ moveToSwap(struct proc *p, uint idx)
 	cprintf("moveto swap pte %x *pte %p\n",pte, *pte);
 	*pte &= ~(PTE_P); // unset pte_p
 	*pte |= PTE_PG; // set pte_pg
-	// switchuvm(p);
 	// {
 	// 	pte_t *Pte = (pte_t *) walkpgdir(p->pgdir, (void *)PTE_ADDR(vpa), 0);
 	// 	AssertPanic(pte == Pte);
