@@ -590,9 +590,12 @@ extern int total_free_pages ;
 void
 printSwapInfo(struct proc *p){
   cprintf("Swap info:\n");
+#ifdef FIFO_SWAP
+  cprintf("\tFIFO swap head %d tail %d size %d\n",p->q_head,p->q_tail,p->q_size);
+#endif
   cprintf("\t");
-  for(int i=0;i<NELEM(p->VPN_Perm_Swap);i++){
-    cprintf("%p ",p->VPN_Perm_Swap[i]);
+  for(int i=0;i<NELEM(p->VPN_Swap);i++){
+    cprintf("%p ",p->VPN_Swap[i]);
   }
   cprintf("\n");
 }
