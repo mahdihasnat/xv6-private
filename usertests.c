@@ -1449,7 +1449,7 @@ sbrktest(void)
   wait();
 
   // can one grow address space to something big?
-#define BIG (100*1024*1024)
+#define BIG (20*4096)
   a = sbrk(0);
   amt = (BIG) - (uint)a;
   p = sbrk(amt);
@@ -1467,11 +1467,13 @@ sbrktest(void)
     printf(stdout, "sbrk could not deallocate\n");
     exit();
   }
+  printf(1,"sbrk here:%d\n",__LINE__);
   c = sbrk(0);
   if(c != a - 4096){
     printf(stdout, "sbrk deallocation produced wrong address, a %x c %x\n", a, c);
     exit();
   }
+  printf(1,"sbrk here:%d\n",__LINE__);
 
   // can one re-allocate that page?
   a = sbrk(0);
@@ -1480,6 +1482,7 @@ sbrktest(void)
     printf(stdout, "sbrk re-allocation failed, a %x c %x\n", a, c);
     exit();
   }
+  printf(1,"sbrk here:%d\n",__LINE__);
   if(*lastaddr == 99){
     // should be zero
     printf(stdout, "sbrk de-allocation didn't really deallocate\n");
@@ -1492,6 +1495,7 @@ sbrktest(void)
     printf(stdout, "sbrk downsize failed, a %x c %x\n", a, c);
     exit();
   }
+  printf(1,"sbrk here:%d\n",__LINE__);
 
   // can we read the kernel's memory?
   for(a = (char*)(KERNBASE); a < (char*) (KERNBASE+2000000); a += 50000){
@@ -1508,6 +1512,7 @@ sbrktest(void)
     }
     wait();
   }
+  printf(1,"sbrk here:%d\n",__LINE__);
 
   // if we run the system out of memory, does it clean up the last
   // failed allocation?
@@ -1515,6 +1520,7 @@ sbrktest(void)
     printf(1, "pipe() failed\n");
     exit();
   }
+  printf(1,"sbrk here:%d\n",__LINE__);
   for(i = 0; i < sizeof(pids)/sizeof(pids[0]); i++){
     if((pids[i] = fork()) == 0){
       // allocate a lot of memory
@@ -1526,6 +1532,7 @@ sbrktest(void)
     if(pids[i] != -1)
       read(fds[0], &scratch, 1);
   }
+  printf(1,"sbrk here:%d\n",__LINE__);
   // if those failed allocations freed up the pages they did allocate,
   // we'll be able to allocate here
   c = sbrk(4096);
@@ -1535,13 +1542,16 @@ sbrktest(void)
     kill(pids[i]);
     wait();
   }
+  printf(1,"sbrk here:%d\n",__LINE__);
   if(c == (char*)0xffffffff){
     printf(stdout, "failed sbrk leaked memory\n");
     exit();
   }
+  printf(1,"sbrk here:%d\n",__LINE__);
 
   if(sbrk(0) > oldbrk)
     sbrk(-(sbrk(0) - oldbrk));
+    
 
   printf(stdout, "sbrk test OK\n");
 }

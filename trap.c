@@ -179,9 +179,13 @@ trap(struct trapframe *tf)
 
   case T_PGFLT:
     ;
-    // cprintf(INFO_STR("Page fault at %x:%x\n"), tf->cs, tf->eip);
+#ifdef DEBUG
+    cprintf(INFO_STR("Page fault at %x:%x\n"), tf->cs, tf->eip);
+#endif
     uint va = rcr2();
-    // cprintf(INFO_STR("va = %x\n"), va);
+#ifdef DEBUG
+    cprintf(INFO_STR("va = %x\n"), va);
+#endif
     if(recoverPageFault(va)==0)
     {
       LOG("pagefault success");
