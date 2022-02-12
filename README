@@ -77,3 +77,7 @@ simulator and run "make qemu".
 - Sufferred from many trap
 - Added time.c in user programs
 - Added bit lebel checking in swap metadata[ faaaster]
+- Added Null Page Pointer protection
+- Added NFU + FIFO page replacement algorithm
+- Changed FSSIZE [1000 -> 5000] in params.h
+- Tasted code for FIFO+NFU ['pageforktest' , 'pagetest' ,'nulltest']
