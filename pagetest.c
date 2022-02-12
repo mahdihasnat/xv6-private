@@ -44,19 +44,20 @@ fork_test()
 	if(x<0)
 	{
 		printf(1,"fork failed\n");
+		exit();
 	}
 	if(x==0)
 	{
-		printf(1,"child sleep 500\n");
-		sleep(500);
+		printf(1,"child sleep 50\n");
+		sleep(50);
 		printf(1,"child arr[10]=%d\n",arr[10]);
 		exit();
 	}
 	else
 	{
 		sleep(100);
-		printf(1,"parent sleep 500\n");
-		sleep(500);
+		printf(1,"parent sleep 50\n");
+		sleep(50);
 		wait();
 		printf(1," parent arr[10]=%d\n",arr[10]);
 		sbrk(PGSIZE);

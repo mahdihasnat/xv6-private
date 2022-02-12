@@ -615,6 +615,9 @@ printSwapInfo(struct proc *p){
 
 void
 printMemoryInfo(struct proc *p){
+  if(p->state == ZOMBIE) return;
+  if(p->state == EMBRYO) return;
+
   printPageTables(p);
   printPageMappings(p);
   cprintf(INFO_STR("total_free_pages = 0x%p\n"),total_free_pages);

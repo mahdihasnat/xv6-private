@@ -178,10 +178,10 @@ trap(struct trapframe *tf)
     break;
 
   case T_PGFLT:
-    cprintf("page fault\n");
-    cprintf(INFO_STR("Page fault at %x:%x\n"), tf->cs, tf->eip);
+    ;
+    // cprintf(INFO_STR("Page fault at %x:%x\n"), tf->cs, tf->eip);
     uint va = rcr2();
-    cprintf(INFO_STR("va = %x\n"), va);
+    // cprintf(INFO_STR("va = %x\n"), va);
     if(recoverPageFault(va)==0)
     {
       LOG("pagefault success");
@@ -190,7 +190,7 @@ trap(struct trapframe *tf)
 
   //PAGEBREAK: 13
   default:
-    cprintf(WARNING_STR("\nTrap Name: %s\n"), getTrapName(tf->trapno));
+    // cprintf(WARNING_STR("\nTrap Name: %s\n"), getTrapName(tf->trapno));
     if(myproc() == 0 || (tf->cs&3) == 0){
       // In kernel, it must be our mistake.
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
