@@ -80,4 +80,5 @@ simulator and run "make qemu".
 - Added Null Page Pointer protection
 - Added NFU + FIFO page replacement algorithm
 - Changed FSSIZE [1000 -> 5000] in params.h
-- Tasted code for FIFO+NFU ['pageforktest' , 'pagetest' ,'nulltest']
+- Tested code for FIFO+NFU ['pageforktest' , 'pagetest' ,'nulltest']
+- Tested code for FIFO+NFU ['usertests']
