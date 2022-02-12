@@ -297,7 +297,7 @@ linkNewPage(struct proc *p, uint vpa)
 			// swap file not full
 			// move page to swap file
 			moveToSwap(p,p->q_head, idx_swap);
-			p->VPA_Memory[p->q_tail]= vpa|MEM_P;
+			p->VPA_Memory[p->q_tail]= vpa;
 			p->q_tail = (p->q_tail + 1) % MAX_PSYC_PAGES;
 			p->q_head = (p->q_head + 1) % MAX_PSYC_PAGES;
 			return 0;
@@ -306,7 +306,7 @@ linkNewPage(struct proc *p, uint vpa)
 	else 
 	{
 		// add to tail
-		p->VPA_Memory[p->q_tail] = vpa|MEM_P;
+		p->VPA_Memory[p->q_tail] = vpa;
 		p->q_tail = (p->q_tail + 1) % MAX_PSYC_PAGES;
 		p->size_mem++;
 		return 0;
@@ -343,13 +343,13 @@ linkNewPage(struct proc *p, uint vpa)
 			cprintf(ERROR_STR("linkNewPage: moveToSwap failed\n"));
 			return -1;
 		}
-		p->VPA_Memory[idx_mem] = vpa | MEM_P ;
+		p->VPA_Memory[idx_mem] = vpa ;
 		return 0;
 	}
 	else 
 	{
 		// add to last element
-		p->VPA_Memory[p->size_mem++] = vpa | MEM_P;
+		p->VPA_Memory[p->size_mem++] = vpa;
 		return 0;
 	}
 #endif
@@ -491,7 +491,7 @@ nfu_Increment_Counter(struct proc *p)
 			// LOGSWAP(cprintf(MAGENTA_STR("nfu_Increment_Counter: pid %d vpa %p\n"), p->pid, vpa);)
 			uint cnt = NFU_MEM_COUNTER(p->VPA_Memory[i]);
 			cnt++;
-			p->VPA_Memory[i] = vpa | MEM_P | NFU_MEM_COUNTER(cnt);
+			p->VPA_Memory[i] = vpa | NFU_MEM_COUNTER(cnt);
 			pte_t *pte = walkpgdir(p->pgdir,(char *) vpa, 0);
 			*pte &= ~PTE_A; // clear PTE_A
 			// cr3 reg change kora lagbe na , karon tlb te ig PTE_A use kore na
