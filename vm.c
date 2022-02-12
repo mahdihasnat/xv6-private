@@ -287,8 +287,11 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     else if((*pte & PTE_PG))
     {
       // lol ei jinish onek por kheyal korlam
-      *pte=0;
-      AssertPanic(unlinkPage(myproc(), a)==0);
+      if(oldsz!=KERNBASE) // ei check tao error khawar por mathay aslo
+      {
+        *pte=0;
+        AssertPanic(unlinkPage(myproc(), a)==0);
+      }
     }
     else if((*pte & PTE_P) != 0){
       pa = PTE_ADDR(*pte);
