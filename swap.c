@@ -16,6 +16,7 @@
 // swap is called either from fork or [userinit|exec]
 // this method is called from fork
 // upon failure no swap file is created
+// hubuhu copy hobe, except swap file e first er dike allign hobe new file e
 int
 initSwap(struct proc *p)
 {
@@ -41,6 +42,7 @@ initSwap(struct proc *p)
 	}
 	char *buff=0;
 	AssertPanic((buff = kalloc()) != 0);
+	int j=0;
 	for(int i=0;i<NELEM(p->VPA_Swap);i++){
 		
 		if(!(p->VPA_Swap[i]&SWAP_P))
@@ -51,11 +53,18 @@ initSwap(struct proc *p)
 			removeSwapFile(p);
 			return -1;
 		}
-		if(writeToSwapFile(p, buff, i *PGSIZE, PGSIZE)<0){
+		if(j != i)
+		{
+			p->VPA_Swap[j] = p->VPA_Swap[i];
+			p->VPA_Swap[i] = 0;
+		}
+
+		if(writeToSwapFile(p, buff, j *PGSIZE, PGSIZE)<0){
 			cprintf(ERROR_STR("initSwap: writeToSwapFile failed\n"));
 			removeSwapFile(p);
 			return -1;
 		}
+		j++;
 	}
 	if(buff)
 		kfree(buff);

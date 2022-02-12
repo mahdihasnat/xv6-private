@@ -53,7 +53,7 @@ simulator and run "make qemu".
 # Debug
 - `kfree` panic - cause inappropriate calculation of flags in page table entry 
 - `TRAP PG_FAULT` - cause values of proc may not properly initialized in all case
-
+- Keep thinks compressed in first pages when writeing fresh swap file
 # Changelog
 - Added size check in mappages
 - Added PGADDRBIT constant in mmu.h

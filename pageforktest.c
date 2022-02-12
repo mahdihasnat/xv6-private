@@ -69,6 +69,10 @@ int
 main(int argc, char * argv[]){
 	int mx_page = atoi(argv[1]);
 	init_mem(mx_page);
+	write_mem(mx_page,'d');
+	check_mem(mx_page,'d');
+	release_mem(mx_page);
+	init_mem(mx_page);
 	write_mem(mx_page,'a');
 	int x = fork();
 	if(x<0)
