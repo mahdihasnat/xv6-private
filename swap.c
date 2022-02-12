@@ -480,7 +480,7 @@ nfu_Increment_Counter(struct proc *p)
 {
 	if(p==0)
 		return;
-	LOGSWAP(cprintf("nfu_Increment_Counter: pid %d\n", p->pid);)
+	// LOGSWAP(cprintf("nfu_Increment_Counter: pid %d\n", p->pid);)
 	for(uint i=0;i<p->size_mem;i++)
 	{
 		uint vpa = MEM_ADDR(p->VPA_Memory[i]);
@@ -492,6 +492,10 @@ nfu_Increment_Counter(struct proc *p)
 			uint cnt = NFU_MEM_COUNTER(p->VPA_Memory[i]);
 			cnt++;
 			p->VPA_Memory[i] = vpa | MEM_P | NFU_MEM_COUNTER(cnt);
+			pte_t *pte = walkpgdir(p->pgdir,(char *) vpa, 0);
+			*pte &= ~PTE_A; // clear PTE_A
+			// cr3 reg change kora lagbe na , karon tlb te ig PTE_A use kore na
+			
 		}
 	}
 }
