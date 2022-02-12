@@ -14,15 +14,15 @@
 #define 	SWAP_P	0x800 // 
 
 // mem flags
-// bit 11    page is occupied				[ for nfu ]
-// bit 10-0  counter ,zero by default 		[ for nfu ]
-// bit 10-0  not used, zero by default 		[ for fifo ]
+
+// bit 11-0  counter ,zero by default 		[ for nfu ]
+// bit 11-0  not used, zero by default 		[ for fifo ]
 
 // #define 	MEM_P	0x800 // // removed since size_mem is used 
 
 #ifdef 		NFU_SWAP
 
 #define 	NFU_MEM_COUNTER(x)  ((uint)(x) &  0x7FF)
-#define 	NFU_COUNTER_MASK	0x7FF
+#define 	NFU_COUNTER_MASK	0xFFF
 
 #endif

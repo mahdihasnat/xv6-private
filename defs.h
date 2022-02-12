@@ -1,6 +1,6 @@
 // #define DEBUG
-#define FIFO_SWAP
-// #define NFU_SWAP
+// #define FIFO_SWAP
+#define NFU_SWAP
 
 struct buf;
 struct context;

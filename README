@@ -54,6 +54,18 @@ simulator and run "make qemu".
 - `kfree` panic - cause inappropriate calculation of flags in page table entry 
 - `TRAP PG_FAULT` - cause values of proc may not properly initialized in all case
 - Keep thinks compressed in first pages when writeing fresh swap file
+
+# Tests
+
+| Test          |NFU    | FIFO   |
+|---------------|-------|--------|
+| usertests     | pass  |  pass  |
+| pagetest      | pass  |  pass  |
+| pageforktest  | pass  |  pass  |
+| nulltest      | pass  |  pass  |
+| forktest      | pass  |  pass  |
+
+
 # Changelog
 - Added size check in mappages
 - Added PGADDRBIT constant in mmu.h
@@ -82,3 +94,4 @@ simulator and run "make qemu".
 - Changed FSSIZE [1000 -> 5000] in params.h
 - Tested code for FIFO+NFU ['pageforktest' , 'pagetest' ,'nulltest']
 - Tested code for FIFO+NFU ['usertests']
+- Changed NFU counter to 12 bit

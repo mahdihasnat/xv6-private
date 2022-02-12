@@ -74,10 +74,12 @@ main(int argc, char * argv[]){
 	release_mem(mx_page);
 	init_mem(mx_page);
 	write_mem(mx_page,'a');
+	sleep(50);
 	int x = fork();
 	if(x<0)
 	{
 		printf(1,"fork failed\n");
+		exit();
 	}
 	if(x==0)
 	{
@@ -94,6 +96,7 @@ main(int argc, char * argv[]){
 			printf(1,"child check memory failed\n");
 			exit();
 		}
+		release_mem(mx_page);
 		printf(1,"child mem test success\n");
 		exit();
 	}
@@ -113,6 +116,7 @@ main(int argc, char * argv[]){
 			printf(1,"parent check memory failed\n");
 			exit();
 		}
+		release_mem(mx_page);
 		printf(1,"parent mem test success\n");
 		exit();
 	}

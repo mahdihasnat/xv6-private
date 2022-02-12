@@ -593,15 +593,21 @@ printSwapInfo(struct proc *p){
   cprintf("Swap info:\n");
 #ifdef FIFO_SWAP
   cprintf("\tFIFO swap head %d tail %d size %d\n",p->q_head,p->q_tail,p->size_mem);
+  cprintf("\tFIFO VPA_Memory: ");
+  for(int i=0;i<p->size_mem;i++)
+  {
+    cprintf("%p ",MEM_ADDR(p->VPA_Memory[(i+p->q_head)%MAX_PSYC_PAGES])>>PGADDRBIT);
+  }
+  cprintf("\n");
 #endif
 #ifdef NFU_SWAP
 
-  cprintf("NFU mem_size: %d [vpa:cnt]: ",p->size_mem);
+  cprintf("NFU mem_size: %d [vpn:cnt]: ",p->size_mem);
   for(int i=0;i<p->size_mem;i++)
-    cprintf("[%p:%d] ",MEM_ADDR(p->VPA_Memory[i]) , NFU_MEM_COUNTER(p->VPA_Memory[i]));
+    cprintf("[%p:%d] ",MEM_ADDR(p->VPA_Memory[i])>>PGADDRBIT , NFU_MEM_COUNTER(p->VPA_Memory[i]));
   cprintf("\n");
 #endif
-  cprintf("VPA_Swap [vpa:prsnt]: ");
+  cprintf("VPA_Swap [vpn:prsnt]: ");
   for(int i=0;i<NELEM(p->VPA_Swap);i++){
     cprintf("[%p:%d] ",SWAP_ADDR(p->VPA_Swap[i])>>PGADDRBIT,((p->VPA_Swap[i])&SWAP_P)?1:0);
   }
