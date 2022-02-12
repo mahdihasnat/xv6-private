@@ -18,7 +18,7 @@
 // bit 10-0  counter ,zero by default 		[ for nfu ]
 // bit 10-0  not used, zero by default 		[ for fifo ]
 
-#define 	MEM_P	0x800 //
+// #define 	MEM_P	0x800 // // removed since size_mem is used 
 
 #ifdef 		NFU_SWAP
 
