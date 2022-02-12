@@ -252,7 +252,16 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       kfree(mem);
       return 0;
     }
-    AssertPanic(linkNewPage(myproc(), a) == 0);
+    if(linkNewPage(myproc(), a) != 0)
+    {
+      cprintf(ERROR_STR("deallocuvm: linkNewPage failed\n"));
+      pte_t * pte = walkpgdir(pgdir, (char*)a, 0);
+      AssertPanic(pte != 0);
+      *pte=0;
+      kfree(mem);
+      deallocuvm(pgdir, newsz, oldsz);
+      return 0;
+    }
   }
   return newsz;
 }
@@ -275,6 +284,12 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
     pte = walkpgdir(pgdir, (char*)a, 0);
     if(!pte)
       a = PGADDR(PDX(a) + 1, 0, 0) - PGSIZE;
+    else if((*pte & PTE_PG))
+    {
+      // lol ei jinish onek por kheyal korlam
+      *pte=0;
+      AssertPanic(unlinkPage(myproc(), a)==0);
+    }
     else if((*pte & PTE_P) != 0){
       pa = PTE_ADDR(*pte);
       if(pa == 0)
