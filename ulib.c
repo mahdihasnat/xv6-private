@@ -84,6 +84,8 @@ stat(const char *n, struct stat *st)
 int
 atoi(const char *s)
 {
+  if(s == 0)
+    return 0;
   int n;
 
   n = 0;
