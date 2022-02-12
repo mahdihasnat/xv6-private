@@ -153,7 +153,7 @@ moveToSwap(struct proc *p, uint idx_mem,uint idx_swap)
 
 	uint vpa = MEM_ADDR(p->VPA_Memory[idx_mem]); // virtual page address
 	AssertPanic(PTE_FLAGS(vpa)==0); // last 12 bits are zero
-
+	LOGSWAP(cprintf(DEBUG_STR("moveToSwap: vpa %x\n"), vpa);)
 	pte_t *pte ;
 	if((pte =(pte_t *) walkpgdir(p->pgdir, (void *)(vpa), 0))== 0) // get pte from pagetable
 	{
@@ -466,7 +466,7 @@ recoverPageFault(uint va){
 	// nijer page table , so joto taratari somvob cr3 update kore tlb thik korte hobe
 	*pte = V2P(mem)| flags;
 	lcr3(V2P(p->pgdir));
-
+	linkNewPage(p,vpa);
 	AssertPanic(rcr3() == V2P(p->pgdir));
 	
 	return 0;
@@ -488,7 +488,7 @@ nfu_Increment_Counter(struct proc *p)
 		AssertPanic(pte != 0);
 		if(*pte & PTE_A)
 		{
-			LOGSWAP(cprintf(MAGENTA_STR("nfu_Increment_Counter: pid %d vpa %p\n"), p->pid, vpa);)
+			// LOGSWAP(cprintf(MAGENTA_STR("nfu_Increment_Counter: pid %d vpa %p\n"), p->pid, vpa);)
 			uint cnt = NFU_MEM_COUNTER(p->VPA_Memory[i]);
 			cnt++;
 			p->VPA_Memory[i] = vpa | MEM_P | NFU_MEM_COUNTER(cnt);

@@ -179,6 +179,7 @@ UPROGS=\
 	_ls\
 	_mkdir\
 	_nulltest\
+	_pageforktest\
 	_pagetest\
 	_rm\
 	_sh\
