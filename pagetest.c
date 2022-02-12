@@ -12,9 +12,19 @@ fifo_test(uint max_page)
 
 	for(uint i=currsize;i<max_page * PGSIZE;i+=PGSIZE)
 	{
-		sbrk(PGSIZE);
-	}
+		if(sbrk(PGSIZE) == (void*)-1)
+		{
+			printf(1,"sbrk error\n");
+			return -1;
+		}
 	
+	}
+	if((uint)sbrk(0) != (uint)max_page * PGSIZE)
+	{
+		printf(1,"sbrk error sz != mx_page * pgsz \n");
+		return -1;
+	}
+		
 	for(uint i=currsize;i<max_page * PGSIZE;i+=PGSIZE)
 	{
 		sbrk(-PGSIZE);
@@ -210,7 +220,7 @@ int stress_test(int new_page)
 
 int
 main(int argc, char * argv[]){
-	if(fifo_test(10)==0)
+	if(fifo_test(30)==0)
 		printf(1,"fifo test passed\n");
 	else
 		printf(1,"fifo test failed\n");
