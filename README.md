@@ -50,13 +50,16 @@ x86 ELF binaries (see https://pdos.csail.mit.edu/6.828/).
 Then run "make TOOLPREFIX=i386-jos-elf-". Now install the QEMU PC
 simulator and run "make qemu".
 
-# Debug
+# Debug Tips
+
 - `kfree` panic - cause inappropriate calculation of flags in page table entry 
 - `TRAP PG_FAULT` - cause values of proc may not properly initialized in all case
 - Keep thinks compressed in first pages when writeing fresh swap file
+- **Star** this repo if you find it helpful
 
 # Tests
 
+----------------------------------
 | Test          |NFU    | FIFO   |
 |---------------|-------|--------|
 | usertests     | pass  |  pass  |
